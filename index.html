@@ -4,12 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Workout Timer Pro</title>
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- React 18 UMD -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <!-- Babel for JSX -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-slate-950">
@@ -48,15 +45,7 @@
         resume: '繼續',
         pause: '暫停',
         skip: '跳過此段',
-        installGuide: '新增至手機主畫面',
-        installDesc: '將此網頁加入主畫面後，可以全螢幕獨立運行：',
-        iosStep1: '於 Safari 點擊底部「分享」圖示',
-        iosStep2: '選取「加至主畫面」 (Add to Home Screen)',
-        androidStep1: '於 Chrome 點擊右上角選單 (三個點)',
-        androidStep2: '選取「安裝應用程式」或「新增至主螢幕」',
-        understand: '明白！',
         actionNamePlaceholder: '動作名稱',
-        quickSelect: '⚡速選',
         seconds: '秒',
         min: '分',
         sec: '秒',
@@ -97,15 +86,7 @@
         resume: '继续',
         pause: '暂停',
         skip: '跳过此段',
-        installGuide: '添加至手机主屏幕',
-        installDesc: '将此网页添加至主屏幕后，可以全屏独立运行：',
-        iosStep1: '在 Safari 点击底部“分享”图标',
-        iosStep2: '选择“添加到主屏幕” (Add to Home Screen)',
-        androidStep1: '在 Chrome 点击右上角菜单 (三个点)',
-        androidStep2: '选择“安装应用”或“添加到主屏幕”',
-        understand: '明白！',
         actionNamePlaceholder: '动作名称',
-        quickSelect: '⚡速选',
         seconds: '秒',
         min: '分',
         sec: '秒',
@@ -146,15 +127,7 @@
         resume: 'Resume',
         pause: 'Pause',
         skip: 'Skip',
-        installGuide: 'Add to Home Screen',
-        installDesc: 'Add this web app to your home screen for full-screen experience:',
-        iosStep1: 'Tap "Share" button at bottom of Safari',
-        iosStep2: 'Select "Add to Home Screen"',
-        androidStep1: 'Tap top-right menu icon (3 dots) in Chrome',
-        androidStep2: 'Select "Install app" or "Add to Home Screen"',
-        understand: 'Got it!',
         actionNamePlaceholder: 'Exercise Name',
-        quickSelect: '⚡Quick',
         seconds: 's',
         min: 'm',
         sec: 's',
@@ -168,7 +141,6 @@
       }
     };
 
-    // Seconds Options Dropdown Values
     const WORK_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 75, 90, 105, 120, 150, 180, 210, 240, 270, 300, 360, 420, 480, 540, 600];
     const REST_OPTIONS = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 75, 90, 105, 120, 150, 180, 210, 240, 270, 300];
 
@@ -183,16 +155,6 @@
           { id: '3', name: '波比跳 (Burpees)', workTime: 20, restTime: 10 },
           { id: '4', name: '高抬腿 (High Knees)', workTime: 20, restTime: 10 },
         ]
-      },
-      {
-        id: 'routine-2',
-        name: '核心肌群強化 Core Workout',
-        sets: 3,
-        exercises: [
-          { id: '1', name: '平板支撐 (Plank)', workTime: 45, restTime: 15 },
-          { id: '2', name: '仰臥起坐 (Crunches)', workTime: 45, restTime: 15 },
-          { id: '3', name: '俄羅斯轉體 (Russian Twists)', workTime: 40, restTime: 15 },
-        ]
       }
     ];
 
@@ -201,12 +163,12 @@
       const t = TRANSLATIONS[lang] || TRANSLATIONS['zh-HK'];
 
       const [routines, setRoutines] = useState(() => {
-        const saved = localStorage.getItem('workout_routines_v4');
+        const saved = localStorage.getItem('workout_routines_v5');
         return saved ? JSON.parse(saved) : INITIAL_ROUTINES;
       });
 
       const [activeRoutineId, setActiveRoutineId] = useState(() => {
-        return localStorage.getItem('workout_active_id_v4') || (routines[0] ? routines[0].id : '');
+        return localStorage.getItem('workout_active_id_v5') || (routines[0] ? routines[0].id : '');
       });
 
       const currentRoutine = routines.find(r => r.id === activeRoutineId) || routines[0] || {
@@ -215,20 +177,19 @@
 
       const [soundEnabled, setSoundEnabled] = useState(true);
       const [view, setView] = useState('config');
-      const [status, setStatus] = useState('idle'); // 'idle' | 'prep' | 'work' | 'rest' | 'paused' | 'finished'
+      const [status, setStatus] = useState('idle');
       const [currentIndex, setCurrentIndex] = useState(0);
       const [currentSet, setCurrentSet] = useState(1);
       const [timeLeft, setTimeLeft] = useState(0);
       const [phaseDuration, setPhaseDuration] = useState(1);
-      const [showInstallGuide, setShowInstallGuide] = useState(false);
 
       const timerRef = useRef(null);
       const audioCtxRef = useRef(null);
       const wakeLockRef = useRef(null);
 
       useEffect(() => { localStorage.setItem('workout_lang', lang); }, [lang]);
-      useEffect(() => { localStorage.setItem('workout_routines_v4', JSON.stringify(routines)); }, [routines]);
-      useEffect(() => { localStorage.setItem('workout_active_id_v4', activeRoutineId); }, [activeRoutineId]);
+      useEffect(() => { localStorage.setItem('workout_routines_v5', JSON.stringify(routines)); }, [routines]);
+      useEffect(() => { localStorage.setItem('workout_active_id_v5', activeRoutineId); }, [activeRoutineId]);
 
       const initAudio = () => {
         if (!audioCtxRef.current) {
@@ -284,7 +245,6 @@
         }
       };
 
-      // Timer Engine
       useEffect(() => {
         if (status === 'paused' || status === 'idle' || status === 'finished') {
           if (timerRef.current) clearInterval(timerRef.current);
@@ -299,8 +259,6 @@
             }
             const nextTime = prev - 1;
 
-            // FIX: DO NOT play 3-2-1 countdown voice during 'rest' period!
-            // Only play 3-2-1 during 'prep' or 'work' phases to prevent voice overlaps.
             if (status !== 'rest' && nextTime <= 3 && nextTime >= 1) {
               playBeep(nextTime === 1 ? 1000 : 800, 0.2);
               speak(`${nextTime}`);
@@ -319,18 +277,15 @@
         const currentEx = exercises[currentIndex];
 
         if (status === 'prep') {
-          // Transition from PREP to WORK
           setStatus('work');
           setTimeLeft(currentEx.workTime);
           setPhaseDuration(currentEx.workTime);
           playBeep(1200, 0.4);
           speak(`${t.speakStart}${currentEx.name}`);
         } else if (status === 'work') {
-          // FIX: If it's the last exercise in the list for this set, SKIP REST completely!
           if (isLastExerciseInSet) {
             moveToNext();
           } else if (currentEx.restTime > 0) {
-            // Transition to REST
             setStatus('rest');
             setTimeLeft(currentEx.restTime);
             setPhaseDuration(currentEx.restTime);
@@ -400,7 +355,6 @@
         setActiveRoutineId(newId);
       };
 
-      // FIX: Calculate total time excluding rest for the last exercise of each set
       const calculateTotalTime = () => {
         if (!currentRoutine.exercises || currentRoutine.exercises.length === 0) return `0${t.sec}`;
         const exercises = currentRoutine.exercises;
@@ -408,7 +362,6 @@
         let singleSetTime = 0;
         exercises.forEach((ex, idx) => {
           singleSetTime += ex.workTime;
-          // Only add rest if NOT the last exercise in the set
           if (idx < exercises.length - 1) {
             singleSetTime += ex.restTime;
           }
@@ -420,11 +373,8 @@
         return `${mins}${t.min} ${secs}${t.sec}`;
       };
 
-      const progressPercent = phaseDuration > 0 ? ((phaseDuration - timeLeft) / phaseDuration) * 100 : 0;
-
       return (
         <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none pb-10">
-          {/* Header */}
           <header className="sticky top-0 z-30 bg-slate-900/90 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <div className="bg-emerald-500 p-2 rounded-xl text-slate-950 font-bold text-lg">🏋️</div>
@@ -433,18 +383,14 @@
                 <p className="text-[10px] text-slate-400">{t.subtitle}</p>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <button onClick={() => setSoundEnabled(!soundEnabled)} className="p-2 bg-slate-800 rounded-lg text-sm">
-                {soundEnabled ? '🔊' : '🔇'}
-              </button>
-              <button onClick={() => setShowInstallGuide(true)} className="p-2 bg-slate-800 rounded-lg text-sm">📱</button>
-            </div>
+            <button onClick={() => setSoundEnabled(!soundEnabled)} className="p-2 bg-slate-800 rounded-lg text-sm">
+              {soundEnabled ? '🔊' : '🔇'}
+            </button>
           </header>
 
           <main className="flex-1 max-w-md w-full mx-auto px-4 pt-4 flex flex-col">
             {view === 'config' && (
               <div className="space-y-4">
-                {/* Routines Carousel */}
                 <section className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-slate-400">{t.routines}</span>
@@ -459,30 +405,75 @@
                       >
                         {r.name}
                       </button>
-                          {/* FIX: Dual Input - Manual Number Input + Quick Dropdown */}
+                    ))}
+                  </div>
+                </section>
+
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 flex justify-between items-center">
+                  <div>
+                    <div className="text-[11px] text-slate-400">{t.totalTime}</div>
+                    <div className="text-base font-extrabold text-emerald-300">{calculateTotalTime()}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[11px] text-slate-400">{t.totalExercises}</div>
+                    <div className="text-base font-extrabold text-slate-200">{currentRoutine.exercises?.length || 0}</div>
+                  </div>
+                </div>
+
+                <section className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+                  <div className="flex justify-between items-center pb-2 border-b border-slate-800">
+                    <input
+                      type="text"
+                      value={currentRoutine.name}
+                      onChange={(e) => updateCurrentRoutine(r => ({ ...r, name: e.target.value }))}
+                      className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs font-bold text-slate-100 focus:outline-none focus:border-emerald-500"
+                    />
+                    <button onClick={() => updateCurrentRoutine(r => ({
+                      ...r,
+                      exercises: [...r.exercises, { id: Date.now().toString(), name: `${t.exercise} ${r.exercises.length + 1}`, workTime: 30, restTime: 10 }]
+                    }))} className="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-xs font-semibold">+ {t.addExercise}</button>
+                  </div>
+
+                  <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
+                    {currentRoutine.exercises.map((ex, idx) => {
+                      const isLast = (idx === currentRoutine.exercises.length - 1);
+                      return (
+                        <div key={ex.id} className="bg-slate-800/90 border border-slate-700/60 p-2.5 rounded-xl space-y-2 text-xs">
+                          <div className="flex items-center space-x-2">
+                            <span className="w-5 h-5 bg-slate-700 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0">{idx + 1}</span>
+                            <input
+                              type="text"
+                              value={ex.name}
+                              onChange={(e) => updateCurrentRoutine(r => ({
+                                ...r,
+                                exercises: r.exercises.map(item => item.id === ex.id ? { ...item, name: e.target.value } : item)
+                              }))}
+                              className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white flex-1 focus:outline-none focus:border-emerald-500"
+                              placeholder={t.actionNamePlaceholder}
+                            />
+                            <button onClick={() => updateCurrentRoutine(r => ({
+                              ...r, exercises: r.exercises.filter(item => item.id !== ex.id)
+                            }))} className="text-red-400 p-1 hover:text-red-300">🗑️</button>
+                          </div>
+
+                          {/* Work & Rest Input with BOTH Manual Input & Dropdown */}
                           <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-slate-700/40">
-                            {/* Work Time: Manual + Dropdown */}
-                            <div className="flex flex-col gap-1 bg-slate-900/80 p-1.5 rounded border border-slate-700/50">
-                              <div className="flex justify-between items-center">
-                                <span className="text-emerald-400 font-medium">{t.workTimeLabel}:</span>
-                              </div>
-                              <div className="flex items-center gap-1">
+                            {/* Work Time: Input + Dropdown */}
+                            <div className="flex justify-between items-center bg-slate-900/80 px-2 py-1.5 rounded border border-slate-700/50">
+                              <span className="text-emerald-400 font-medium">{t.workTimeLabel}:</span>
+                              <div className="flex items-center space-x-1">
                                 <input
                                   type="number"
                                   min="1"
-                                  max="600"
                                   value={ex.workTime}
-                                  onChange={(e) => {
-                                    const val = Math.max(1, parseInt(e.target.value) || 1);
-                                    updateCurrentRoutine(r => ({
-                                      ...r,
-                                      exercises: r.exercises.map(item => item.id === ex.id ? { ...item, workTime: val } : item)
-                                    }));
-                                  }}
-                                  className="w-12 bg-slate-800 text-emerald-300 font-bold border border-slate-600 rounded px-1 py-0.5 text-xs text-center focus:outline-none focus:border-emerald-500"
+                                  onChange={(e) => updateCurrentRoutine(r => ({
+                                    ...r,
+                                    exercises: r.exercises.map(item => item.id === ex.id ? { ...item, workTime: Math.max(1, parseInt(e.target.value) || 0) } : item)
+                                  }))}
+                                  className="w-10 bg-slate-800 text-right text-emerald-300 font-bold border border-slate-600 rounded px-1 py-0.5 text-xs focus:outline-none focus:border-emerald-500"
                                 />
                                 <select
-                                  value={WORK_OPTIONS.includes(ex.workTime) ? ex.workTime : ''}
+                                  value=""
                                   onChange={(e) => {
                                     if (e.target.value) {
                                       const val = parseInt(e.target.value);
@@ -492,63 +483,52 @@
                                       }));
                                     }
                                   }}
-                                  className="bg-slate-800 text-slate-300 border border-slate-600 rounded px-1 py-0.5 text-[10px] focus:outline-none focus:border-emerald-500 flex-1 min-w-0"
+                                  className="bg-slate-800 text-emerald-300 border border-slate-600 rounded px-1 py-0.5 text-xs focus:outline-none"
                                 >
-                                  <option value="" disabled>{WORK_OPTIONS.includes(ex.workTime) ? t.quickSelect : '✏️ ' + ex.workTime + t.sec}</option>
+                                  <option value="">▼</option>
                                   {WORK_OPTIONS.map(sec => (
-                                    <option key={sec} value={sec}>{sec} {t.sec}</option>
+                                    <option key={sec} value={sec}>{sec}s</option>
                                   ))}
                                 </select>
                               </div>
                             </div>
 
-                            {/* Rest Time: Manual + Dropdown */}
-                            <div className="flex flex-col gap-1 bg-slate-900/80 p-1.5 rounded border border-slate-700/50 justify-center">
+                            {/* Rest Time: Input + Dropdown */}
+                            <div className="flex justify-between items-center bg-slate-900/80 px-2 py-1.5 rounded border border-slate-700/50">
+                              <span className="text-amber-400 font-medium">{t.restTimeLabel}:</span>
                               {isLast ? (
-                                <div className="text-center py-1">
-                                  <span className="text-amber-400 font-medium block">{t.restTimeLabel}:</span>
-                                  <span className="text-slate-400 text-[10px] italic font-semibold">{t.noRestLabel}</span>
-                                </div>
+                                <span className="text-slate-400 text-[10px] italic font-semibold">{t.noRestLabel}</span>
                               ) : (
-                                <>
-                                  <div className="flex justify-between items-center">
-                                    <span className="text-amber-400 font-medium">{t.restTimeLabel}:</span>
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <input
-                                      type="number"
-                                      min="0"
-                                      max="300"
-                                      value={ex.restTime}
-                                      onChange={(e) => {
-                                        const val = Math.max(0, parseInt(e.target.value) || 0);
+                                <div className="flex items-center space-x-1">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={ex.restTime}
+                                    onChange={(e) => updateCurrentRoutine(r => ({
+                                      ...r,
+                                      exercises: r.exercises.map(item => item.id === ex.id ? { ...item, restTime: Math.max(0, parseInt(e.target.value) || 0) } : item)
+                                    }))}
+                                    className="w-10 bg-slate-800 text-right text-amber-300 font-bold border border-slate-600 rounded px-1 py-0.5 text-xs focus:outline-none focus:border-amber-500"
+                                  />
+                                  <select
+                                    value=""
+                                    onChange={(e) => {
+                                      if (e.target.value !== "") {
+                                        const val = parseInt(e.target.value);
                                         updateCurrentRoutine(r => ({
                                           ...r,
                                           exercises: r.exercises.map(item => item.id === ex.id ? { ...item, restTime: val } : item)
                                         }));
-                                      }}
-                                      className="w-12 bg-slate-800 text-amber-300 font-bold border border-slate-600 rounded px-1 py-0.5 text-xs text-center focus:outline-none focus:border-amber-500"
-                                    />
-                                    <select
-                                      value={REST_OPTIONS.includes(ex.restTime) ? ex.restTime : ''}
-                                      onChange={(e) => {
-                                        if (e.target.value !== '') {
-                                          const val = parseInt(e.target.value);
-                                          updateCurrentRoutine(r => ({
-                                            ...r,
-                                            exercises: r.exercises.map(item => item.id === ex.id ? { ...item, restTime: val } : item)
-                                          }));
-                                        }
-                                      }}
-                                      className="bg-slate-800 text-slate-300 border border-slate-600 rounded px-1 py-0.5 text-[10px] focus:outline-none focus:border-amber-500 flex-1 min-w-0"
-                                    >
-                                      <option value="" disabled>{REST_OPTIONS.includes(ex.restTime) ? t.quickSelect : '✏️ ' + ex.restTime + t.sec}</option>
-                                      {REST_OPTIONS.map(sec => (
-                                        <option key={sec} value={sec}>{sec} {t.sec}</option>
-                                      ))}
-                                    </select>
-                                  </div>
-                                </>
+                                      }
+                                    }}
+                                    className="bg-slate-800 text-amber-300 border border-slate-600 rounded px-1 py-0.5 text-xs focus:outline-none"
+                                  >
+                                    <option value="">▼</option>
+                                    {REST_OPTIONS.map(sec => (
+                                      <option key={sec} value={sec}>{sec}s</option>
+                                    ))}
+                                  </select>
+                                </div>
                               )}
                             </div>
                           </div>
@@ -558,7 +538,6 @@
                   </div>
                 </section>
 
-                {/* Global Options */}
                 <section className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-3">
                   <div className="flex justify-between items-center text-xs">
                     <span className="font-semibold text-slate-300">{t.totalSets}</span>
@@ -569,7 +548,6 @@
                     </div>
                   </div>
                   
-                  {/* FIX: Language Dropdown */}
                   <div className="flex justify-between items-center text-xs border-t border-slate-800 pt-2.5">
                     <span className="font-semibold text-slate-300">🌐 {t.appLanguage}</span>
                     <select value={lang} onChange={(e) => setLang(e.target.value)} className="bg-slate-800 border border-slate-700 text-slate-200 rounded px-2.5 py-1 text-xs focus:outline-none">
@@ -586,7 +564,6 @@
               </div>
             )}
 
-            {/* Timer Screen */}
             {view === 'timer' && (
               <div className="space-y-6 py-4 flex-1 flex flex-col justify-between">
                 <div className="flex justify-between bg-slate-900 p-3 rounded-2xl text-xs border border-slate-800">
@@ -620,38 +597,6 @@
               </div>
             )}
           </main>
-
-          {/* Modal Guide */}
-          {showInstallGuide && (
-            <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-sm w-full space-y-4 shadow-2xl">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                  <h3 className="font-bold text-sm text-slate-100">{t.installGuide}</h3>
-                  <button onClick={() => setShowInstallGuide(false)} className="text-slate-400 font-bold">✕</button>
-                </div>
-                <p className="text-xs text-slate-300 leading-relaxed">{t.installDesc}</p>
-                <div className="space-y-2 text-xs text-slate-300">
-                  <div className="bg-slate-800 p-2.5 rounded-xl border border-slate-700">
-                    <div className="font-bold text-emerald-400">iOS (Safari):</div>
-                    <ol className="list-decimal list-inside text-[11px] space-y-1 mt-1">
-                      <li>{t.iosStep1}</li>
-                      <li>{t.iosStep2}</li>
-                    </ol>
-                  </div>
-                  <div className="bg-slate-800 p-2.5 rounded-xl border border-slate-700">
-                    <div className="font-bold text-teal-400">Android (Chrome):</div>
-                    <ol className="list-decimal list-inside text-[11px] space-y-1 mt-1">
-                      <li>{t.androidStep1}</li>
-                      <li>{t.androidStep2}</li>
-                    </ol>
-                  </div>
-                </div>
-                <button onClick={() => setShowInstallGuide(false)} className="w-full py-2.5 bg-emerald-500 text-slate-950 font-bold text-xs rounded-xl">
-                  {t.understand}
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       );
     }
