@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>運動計時器 Pro</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-slate-950 min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center space-x-2">
+      <div class="bg-gradient-to-tr from-emerald-500 to-teal-400 p-2 rounded-xl text-slate-950 font-bold shadow-lg">
+        🏋️
+      </div>
+      <div>
+        <h1 id="ui-title" class="font-extrabold text-base tracking-wide bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">運動計時器 Pro</h1>
+        <p id="ui-subtitle" class="text-[10px] text-slate-400">iOS / Android 跨平台間歇訓練助手</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-2">
+      <button id="btn-sound-toggle" class="p-2 rounded-lg bg-slate-800 border border-slate-700 text-emerald-400 text-xs">🔊</button>
+      <button id="btn-guide-toggle" class="p-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-xs">📱</button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 max-w-md w-full mx-auto px-4 pt-4 flex flex-col pb-10">
+
+    <!-- CONFIG VIEW -->
+    <div id="view-config" class="space-y-4">
+      
+      <!-- Routines Tabs -->
+      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 shadow-xl space-y-2.5">
+        <div class="flex items-center justify-between">
+          <span id="ui-routines-label" class="text-xs font-semibold text-slate-400 uppercase tracking-wider">我的運動組合</span>
+          <button id="btn-add-routine" class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold">+ 新增組合</button>
+        </div>
+        <div id="routines-list" class="flex items-center space-x-2 overflow-x-auto pb-1 no-scrollbar">
+          <!-- Dynamically Generated Routines -->
+        </div>
+      </section>
+
+      <!-- Summary Banner -->
+      <div class="bg-gradient-to-r from-emerald-950/60 to-teal-950/60 border border-emerald-800/40 rounded-2xl p-3.5 flex items-center justify-between shadow-lg">
+        <div>
+          <div id="ui-total-time-label" class="text-[11px] text-slate-400">估算總運動時間</div>
+          <div id="summary-total-time" class="text-base font-extrabold text-emerald-300">0分 0秒</div>
+        </div>
+        <div class="text-right">
+          <div id="ui-total-ex-label" class="text-[11px] text-slate-400">總動作數</div>
+          <div id="summary-total-ex" class="text-base font-extrabold text-slate-200">0</div>
+        </div>
+      </div>
+
+      <!-- Exercises List Editor -->
+      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-3">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+          <input id="routine-name-input" type="text" class="bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-100 focus:outline-none focus:border-emerald-500" value="自訂運動">
+          <button id="btn-add-exercise" class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold">+ 新增動作</button>
+        </div>
+        <div id="exercises-container" class="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
+          <!-- Dynamically Generated Exercises -->
+        </div>
+      </section>
+
+      <!-- Options -->
+      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 shadow-xl space-y-3">
+        <div class="flex items-center justify-between">
+          <span id="ui-total-sets-label" class="text-xs font-semibold text-slate-300">總循環組數 (Sets)</span>
+          <div class="flex items-center space-x-2">
+            <button id="btn-sets-dec" class="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 font-bold text-sm">-</button>
+            <span id="sets-count-display" class="w-6 text-center text-emerald-400 font-extrabold text-sm">2</span>
+            <button id="btn-sets-inc" class="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 font-bold text-sm">+</button>
+          </div>
+        </div>
+        <div class="flex items-center justify-between border-t border-slate-800 pt-2.5">
+          <span id="ui-language-label" class="text-xs font-semibold text-slate-300">App 介面及語音語言</span>
+          <select id="lang-select" class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-200">
+            <option value="zh-HK">繁體中文 (廣東話)</option>
+            <option value="zh-CN">简体中文 (普通话)</option>
+            <option value="en-US">English</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- Start Button -->
+      <button id="btn-start-workout" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black text-base tracking-wider shadow-lg shadow-emerald-950/50 active:scale-[0.98] transition">
+        ▶ 開始運動計時
+      </button>
+    </div>
+
+    <!-- TIMER VIEW -->
+    <div id="view-timer" class="space-y-5 hidden py-2">
+      <div class="flex items-center justify-between bg-slate-900 border border-slate-800 px-4 py-2.5 rounded-2xl">
+        <div>
+          <span id="ui-progress-label" class="text-[11px] text-slate-400">當前進度</span>
+          <div id="timer-progress-display" class="text-xs font-extrabold text-slate-200">1 / 4</div>
+        </div>
+        <div class="text-right">
+          <span id="ui-round-label" class="text-[11px] text-slate-400">循環組數</span>
+          <div id="timer-set-display" class="text-xs font-extrabold text-emerald-400">1 / 2</div>
+        </div>
+      </div>
+
+      <!-- Ring Countdown -->
+      <div class="flex flex-col items-center justify-center my-4">
+        <div id="timer-circle" class="relative w-64 h-64 rounded-full bg-slate-900 border-4 border-emerald-500 shadow-2xl flex flex-col items-center justify-center p-4 text-center transition-all duration-300">
+          <div id="timer-badge" class="bg-slate-950/60 px-3 py-0.5 rounded-full text-[11px] font-bold uppercase mb-2 border border-white/10 text-white">準備倒數</div>
+          <div id="timer-seconds" class="text-6xl font-black font-mono tracking-tight text-white">5<span class="text-base font-normal text-slate-300 ml-1">秒</span></div>
+          <div id="timer-exercise-name" class="text-base font-bold text-white max-w-[180px] truncate mt-1">開合跳</div>
+          <div id="timer-next-preview" class="text-[11px] text-slate-300/80 mt-1 max-w-[180px] truncate">下個：休息</div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="grid grid-cols-3 gap-3">
+        <button id="btn-timer-reset" class="py-3 rounded-2xl bg-slate-800 border border-slate-700 text-slate-200 font-bold text-xs active:scale-95">🔄 重設</button>
+        <button id="btn-timer-pause" class="py-3 rounded-2xl bg-emerald-500 border border-emerald-400 text-slate-950 font-bold text-xs active:scale-95">⏸ 暫停</button>
+        <button id="btn-timer-skip" class="py-3 rounded-2xl bg-slate-800 border border-slate-700 text-slate-200 font-bold text-xs active:scale-95">⏭ 跳過</button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- iOS / Android Install Guide Modal -->
+  <div id="modal-install" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-sm w-full space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+        <h3 id="ui-install-title" class="font-bold text-sm text-slate-100">新增至手機主畫面</h3>
+        <button id="btn-close-modal" class="text-slate-400 font-bold p-1">✕</button>
+      </div>
+      <p id="ui-install-desc" class="text-xs text-slate-300 leading-relaxed">將此網頁加入主畫面後，可以全螢幕獨立運行：</p>
+      <div class="space-y-2 text-xs text-slate-300">
+        <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700/50">
+          <div class="font-bold text-emerald-400">iOS (iPhone Safari):</div>
+          <div>1. 點擊 Safari 底部「分享」圖示</div>
+          <div>2. 選取「加至主畫面」 (Add to Home Screen)</div>
+        </div>
+        <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700/50">
+          <div class="font-bold text-teal-400">Android (Chrome):</div>
+          <div>1. 點擊右上角選單 (三個點)</div>
+          <div>2. 選取「安裝應用程式」或「新增至主螢幕」</div>
+        </div>
+      </div>
+      <button id="btn-understand" class="w-full py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs">明白！</button>
+    </div>
+  </div>
+
+  <!-- JavaScript Logic -->
+  <script>
+    // Translations Dictionary
+    const TRANSLATIONS = {
+      'zh-HK': {
+        title: '運動計時器 Pro',
+        subtitle: 'iOS / Android 跨平台間歇訓練助手',
+        routines: '我的運動組合',
+        addRoutine: '+ 新增組合',
+        totalTime: '估算總運動時間',
+        totalEx: '總動作數',
+        addExercise: '+ 新增動作',
+        totalSets: '總循環組數 (Sets)',
+        language: 'App 介面及語音語言',
+        start: '▶ 開始運動計時',
+        progress: '當前進度',
+        round: '循環組數',
+        prep: '準備倒數',
+        work: '運動進行中',
+        rest: '休息時間',
+        paused: '暫停中',
+        finished: '完成運動！',
+        reset: '🔄 結束重來',
+        resume: '▶ 繼續',
+        pause: '⏸ 暫停',
+        skip: '⏭ 跳過此段',
+        speakStart: '開始：',
+        speakRest: '休息時間',
+        speakPrepNext: '準備下個動作：',
+        speakSetPrep: '第 {set} 組準備，動作：',
+        speakFinish: '恭喜！運動全組完成！',
+        speakPrepStart: '準備開始運動，第一組：',
+        sec: '秒', min: '分', ex: '動作'
+      },
+      'zh-CN': {
+        title: '运动计时器 Pro',
+        subtitle: 'iOS / Android 跨平台间歇训练助手',
+        routines: '我的运动组合',
+        addRoutine: '+ 新建组合',
+        totalTime: '估算总运动时间',
+        totalEx: '总动作数',
+        addExercise: '+ 新增动作',
+        totalSets: '总循环组数 (Sets)',
+        language: 'App 界面及语音语言',
+        start: '▶ 开始运动计时',
+        progress: '当前进度',
+        round: '循环组数',
+        prep: '准备倒计时',
+        work: '运动进行中',
+        rest: '休息时间',
+        paused: '暂停中',
+        finished: '完成运动！',
+        reset: '🔄 结束重来',
+        resume: '▶ 继续',
+        pause: '⏸ 暂停',
+        skip: '⏭ 跳过此段',
+        speakStart: '开始：',
+        speakRest: '休息时间',
+        speakPrepNext: '准备下个动作：',
+        speakSetPrep: '第 {set} 组准备，动作：',
+        speakFinish: '恭喜！运动全组完成！',
+        speakPrepStart: '准备开始运动，第一组：',
+        sec: '秒', min: '分', ex: '动作'
+      },
+      'en-US': {
+        title: 'Workout Timer Pro',
+        subtitle: 'iOS & Android HIIT Companion',
+        routines: 'Workout Routines',
+        addRoutine: '+ Add Routine',
+        totalTime: 'Estimated Total Time',
+        totalEx: 'Total Exercises',
+        addExercise: '+ Add Exercise',
+        totalSets: 'Total Sets',
+        language: 'App Language & Voice',
+        start: '▶ Start Workout',
+        progress: 'Progress',
+        round: 'Round',
+        prep: 'Get Ready',
+        work: 'Work Time',
+        rest: 'Rest Time',
+        paused: 'Paused',
+        finished: 'Workout Complete!',
+        reset: '🔄 Reset',
+        resume: '▶ Resume',
+        pause: '⏸ Pause',
+        skip: '⏭ Skip',
+        speakStart: 'Start: ',
+        speakRest: 'Rest time',
+        speakPrepNext: 'Get ready for: ',
+        speakSetPrep: 'Round {set} ready, action: ',
+        speakFinish: 'Congratulations! Workout complete!',
+        speakPrepStart: 'Get ready, first exercise: ',
+        sec: 's', min: 'm', ex: 'Exercise'
+      }
+    };
+
+    const INITIAL_ROUTINES = [
+      {
+        id: 'r1',
+        name: 'TABATA 高強度訓練',
+        sets: 8,
+        exercises: [
+          { id: '1', name: '開合跳 (Jumping Jacks)', workTime: 20, restTime: 10 },
+          { id: '2', name: '深蹲 (Squats)', workTime: 20, restTime: 10 },
+          { id: '3', name: '波比跳 (Burpees)', workTime: 20, restTime: 10 },
+          { id: '4', name: '高抬腿 (High Knees)', workTime: 20, restTime: 10 }
+        ]
+      },
+      {
+        id: 'r2',
+        name: '核心肌群強化',
+        sets: 3,
+        exercises: [
+          { id: '1', name: '平板支撐 (Plank)', workTime: 45, restTime: 15 },
+          { id: '2', name: '仰臥起坐 (Crunches)', workTime: 45, restTime: 15 },
+          { id: '3', name: '俄羅斯轉體 (Russian Twists)', workTime: 40, restTime: 15 }
+        ]
+      }
+    ];
+
+    // State Variables
+    let lang = localStorage.getItem('workout_lang') || 'zh-HK';
+    let routines = JSON.parse(localStorage.getItem('workout_routines_v4')) || INITIAL_ROUTINES;
+    let activeRoutineId = localStorage.getItem('workout_active_id') || routines[0].id;
+    let soundEnabled = true;
+
+    // Timer Runtime States
+    let timerInterval = null;
+    let status = 'idle'; // prep, work, rest, paused, finished
+    let currentSet = 1;
+    let currentIndex = 0;
+    let timeLeft = 0;
+    let phaseDuration = 1;
+    let audioCtx = null;
+    let wakeLock = null;
+
+    // DOM Elements
+    const getActiveRoutine = () => routines.find(r => r.id === activeRoutineId) || routines[0];
+
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) audioCtx = new AudioCtx();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playBeep(freq = 800, duration = 0.15) {
+      if (!soundEnabled) return;
+      try {
+        initAudio();
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function speak(text) {
+      if (!('speechSynthesis' in window)) return;
+      try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = lang;
+        utterance.rate = 1.05;
+        window.speechSynthesis.speak(utterance);
+      } catch (e) {}
+    }
+
+    async function requestWakeLock() {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen');
+        }
+      } catch (e) {}
+    }
+
+    function releaseWakeLock() {
+      if (wakeLock) {
+        wakeLock.release();
+        wakeLock = null;
+      }
+    }
+
+    function render() {
+      const t = TRANSLATIONS[lang] || TRANSLATIONS['zh-HK'];
+      const r = getActiveRoutine();
+
+      // UI Labels
+      document.getElementById('ui-title').textContent = t.title;
+      document.getElementById('ui-subtitle').textContent = t.subtitle;
+      document.getElementById('ui-routines-label').textContent = t.routines;
+      document.getElementById('btn-add-routine').textContent = t.addRoutine;
+      document.getElementById('ui-total-time-label').textContent = t.totalTime;
+      document.getElementById('ui-total-ex-label').textContent = t.totalEx;
+      document.getElementById('btn-add-exercise').textContent = t.addExercise;
+      document.getElementById('ui-total-sets-label').textContent = t.totalSets;
+      document.getElementById('ui-language-label').textContent = t.language;
+      document.getElementById('btn-start-workout').textContent = t.start;
+      document.getElementById('lang-select').value = lang;
+
+      // Routines Tabs
+      const routinesContainer = document.getElementById('routines-list');
+      routinesContainer.innerHTML = routines.map(rt => `
+        <button onclick="switchRoutine('${rt.id}')" class="px-3 py-1.5 rounded-xl text-xs shrink-0 font-semibold border ${rt.id === activeRoutineId ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300' : 'bg-slate-800 border-slate-700 text-slate-400'}">
+          ${rt.name}
+        </button>
+      `).join('');
+
+      // Routine Detail Inputs
+      document.getElementById('routine-name-input').value = r.name;
+      document.getElementById('sets-count-display').textContent = r.sets;
+
+      // Exercises
+      const exercisesContainer = document.getElementById('exercises-container');
+      exercisesContainer.innerHTML = r.exercises.map((ex, idx) => `
+        <div class="bg-slate-800 p-2.5 rounded-xl space-y-2 text-xs">
+          <div class="flex items-center space-x-2">
+            <span class="w-4 h-4 bg-slate-700 rounded-full flex items-center justify-center text-[10px]">${idx + 1}</span>
+            <input type="text" onchange="updateExName('${ex.id}', this.value)" value="${ex.name}" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white flex-1" />
+            <button onclick="deleteEx('${ex.id}')" class="text-red-400">🗑️</button>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-[11px]">
+            <div class="flex justify-between bg-slate-900 px-2 py-1 rounded">
+              <span class="text-emerald-400">運動(秒):</span>
+              <input type="number" onchange="updateExWork('${ex.id}', this.value)" value="${ex.workTime}" class="w-10 bg-slate-800 text-right text-emerald-300 font-bold" />
+            </div>
+            <div class="flex justify-between bg-slate-900 px-2 py-1 rounded">
+              <span class="text-amber-400">休息(秒):</span>
+              <input type="number" onchange="updateExRest('${ex.id}', this.value)" value="${ex.restTime}" class="w-10 bg-slate-800 text-right text-amber-300 font-bold" />
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      // Calculated Total
+      const singleSet = r.exercises.reduce((acc, ex) => acc + ex.workTime + ex.restTime, 0);
+      const total = (singleSet * r.sets) + 5;
+      document.getElementById('summary-total-time').textContent = `${Math.floor(total / 60)}${t.min} ${total % 60}${t.sec}`;
+      document.getElementById('summary-total-ex').textContent = r.exercises.length;
+
+      // Persist State
+      localStorage.setItem('workout_lang', lang);
+      localStorage.setItem('workout_routines_v4', JSON.stringify(routines));
+      localStorage.setItem('workout_active_id', activeRoutineId);
+    }
+
+    // Helper Action Functions
+    window.switchRoutine = (id) => { activeRoutineId = id; render(); };
+    window.updateExName = (id, val) => {
+      const r = getActiveRoutine();
+      const ex = r.exercises.find(e => e.id === id);
+      if (ex) ex.name = val;
+      render();
+    };
+    window.updateExWork = (id, val) => {
+      const r = getActiveRoutine();
+      const ex = r.exercises.find(e => e.id === id);
+      if (ex) ex.workTime = Math.max(1, parseInt(val) || 0);
+      render();
+    };
+    window.updateExRest = (id, val) => {
+      const r = getActiveRoutine();
+      const ex = r.exercises.find(e => e.id === id);
+      if (ex) ex.restTime = Math.max(0, parseInt(val) || 0);
+      render();
+    };
+    window.deleteEx = (id) => {
+      const r = getActiveRoutine();
+      r.exercises = r.exercises.filter(e => e.id !== id);
+      render();
+    };
+
+    function startWorkout() {
+      const r = getActiveRoutine();
+      if (!r.exercises.length) return;
+      initAudio();
+      requestWakeLock();
+      document.getElementById('view-config').classList.add('hidden');
+      document.getElementById('view-timer').classList.remove('hidden');
+
+      currentIndex = 0;
+      currentSet = 1;
+      status = 'prep';
+      timeLeft = 5;
+      phaseDuration = 5;
+
+      const t = TRANSLATIONS[lang] || TRANSLATIONS['zh-HK'];
+      speak(`${t.speakPrepStart}${r.exercises[0].name}`);
+      runTimerLoop();
+    }
+
+    function runTimerLoop() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (status === 'paused') return;
+
+        if (timeLeft <= 1) {
+          handlePhaseComplete();
+        } else {
+          timeLeft--;
+          if (timeLeft <= 3 && timeLeft >= 1) {
+            playBeep(timeLeft === 1 ? 1000 : 800, 0.2);
+            speak(`${timeLeft}`);
+          }
+        }
+        updateTimerDisplay();
+      }, 1000);
+      updateTimerDisplay();
+    }
+
+    function handlePhaseComplete() {
+      const r = getActiveRoutine();
+      const currentEx = r.exercises[currentIndex];
+      const t = TRANSLATIONS[lang] || TRANSLATIONS['zh-HK'];
+
+      if (status === 'prep') {
+        status = 'work';
+        timeLeft = currentEx.workTime;
+        phaseDuration = currentEx.workTime;
+        playBeep(1200, 0.4);
+        speak(`${t.speakStart}${currentEx.name}`);
+      } else if (status === 'work') {
+        if (currentEx.restTime > 0) {
+          status = 'rest';
+          timeLeft = currentEx.restTime;
+          phaseDuration = currentEx.restTime;
+          playBeep(600, 0.3);
+          speak(t.speakRest);
+        } else {
+          moveToNext();
+        }
+      } else if (status === 'rest') {
+        moveToNext();
+      }
+    }
+
+    function moveToNext() {
+      const r = getActiveRoutine();
+      const t = TRANSLATIONS[lang] || TRANSLATIONS['zh-HK'];
+
+      if (currentIndex < r.exercises.length - 1) {
+        currentIndex++;
+        status = 'prep';
+        timeLeft = 3;
+        phaseDuration = 3;
+        speak(`${t.speakPrepNext}${r.exercises[currentIndex].name}`);
+      } else {
+        if (currentSet < r.sets) {
+          currentSet++;
+          currentIndex = 0;
+          status = 'prep';
+          timeLeft = 5;
+          phaseDuration = 5;
+          const msg = t.speakSetPrep.replace('{set}', currentSet.toString());
+          speak(`${msg}${r.exercises[0].name}`);
+        } else {
+          status = 'finished';
+          clearInterval(timerInterval);
+          releaseWakeLock();
+          playBeep(1500, 0.6);
+          speak(t.speakFinish);
+        }
+      }
+    }
+
+    function updateTimerDisplay() {
+      const r = getActiveRoutine();
+      const t = TRANSLATIONS[lang] || TRANSLATIONS['zh-HK'];
+      const currentEx = r.exercises[currentIndex] || {};
+
+      document.getElementById('timer-progress-display').textContent = `${currentIndex + 1} / ${r.exercises.length}`;
+      document.getElementById('timer-set-display').textContent = `${currentSet} / ${r.sets}`;
+      document.getElementById('timer-badge').textContent = t[status] || status;
+      document.getElementById('timer-seconds').innerHTML = `${timeLeft}<span class="text-base font-normal text-slate-300 ml-1">${t.sec}</span>`;
+      document.getElementById('timer-exercise-name').textContent = status === 'prep' ? t.prep : currentEx.name;
+
+      if (status === 'work' && currentEx.restTime > 0) {
+        document.getElementById('timer-next-preview').textContent = `下個：休息 (${currentEx.restTime}${t.sec})`;
+      } else if (currentIndex < r.exercises.length - 1) {
+        document.getElementById('timer-next-preview').textContent = `下個：${r.exercises[currentIndex + 1].name}`;
+      } else {
+        document.getElementById('timer-next-preview').textContent = `下組：${r.exercises[0]?.name || ''}`;
+      }
+    }
+
+    document.getElementById('btn-sound-toggle').onclick = () => {
+      soundEnabled = !soundEnabled;
+      document.getElementById('btn-sound-toggle').textContent = soundEnabled ? '🔊' : '🔇';
+    };
+    document.getElementById('btn-guide-toggle').onclick = () => {
+      document.getElementById('modal-install').classList.remove('hidden');
+    };
+    document.getElementById('btn-close-modal').onclick = () => {
+      document.getElementById('modal-install').classList.add('hidden');
+    };
+    document.getElementById('btn-understand').onclick = () => {
+      document.getElementById('modal-install').classList.add('hidden');
+    };
+    document.getElementById('lang-select').onchange = (e) => {
+      lang = e.target.value;
+      render();
+    };
+    document.getElementById('btn-sets-dec').onclick = () => {
+      const r = getActiveRoutine();
+      r.sets = Math.max(1, r.sets - 1);
+      render();
+    };
+    document.getElementById('btn-sets-inc').onclick = () => {
+      const r = getActiveRoutine();
+      r.sets++;
+      render();
+    };
+    document.getElementById('routine-name-input').onchange = (e) => {
+      const r = getActiveRoutine();
+      r.name = e.target.value;
+      render();
+    };
+    document.getElementById('btn-add-routine').onclick = () => {
+      const newId = `r_${Date.now()}`;
+      routines.push({
+        id: newId,
+        name: `運動組合 ${routines.length + 1}`,
+        sets: 2,
+        exercises: [{ id: '1', name: '動作 1', workTime: 30, restTime: 10 }]
+      });
+      activeRoutineId = newId;
+      render();
+    };
+    document.getElementById('btn-add-exercise').onclick = () => {
+      const r = getActiveRoutine();
+      r.exercises.push({ id: Date.now().toString(), name: `動作 ${r.exercises.length + 1}`, workTime: 30, restTime: 10 });
+      render();
+    };
+    document.getElementById('btn-start-workout').onclick = startWorkout;
+
+    document.getElementById('btn-timer-reset').onclick = () => {
+      if (timerInterval) clearInterval(timerInterval);
+      releaseWakeLock();
+      status = 'idle';
+      document.getElementById('view-timer').classList.add('hidden');
+      document.getElementById('view-config').classList.remove('hidden');
+    };
+    document.getElementById('btn-timer-pause').onclick = () => {
+      if (status === 'paused') {
+        status = 'work';
+        document.getElementById('btn-timer-pause').textContent = '⏸ 暫停';
+      } else {
+        status = 'paused';
+        document.getElementById('btn-timer-pause').textContent = '▶ 繼續';
+      }
+    };
+    document.getElementById('btn-timer-skip').onclick = () => {
+      handlePhaseComplete();
+      updateTimerDisplay();
+    };
+
+    // Initial Launch
+    render();
+  </script>
+</body>
+</html>
