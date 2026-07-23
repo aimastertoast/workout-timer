@@ -1,12 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-HK">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Workout Timer Pro</title>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React 18 UMD -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- Babel for JSX -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-slate-950">
@@ -21,6 +24,7 @@
         subtitle: 'iOS / Android 跨平台間歇訓練助手',
         routines: '我的運動組合',
         addRoutine: '建立新組合',
+        deleteRoutine: '刪除組合',
         totalTime: '估算總運動時間',
         totalExercises: '總動作數',
         addExercise: '新增動作',
@@ -56,12 +60,14 @@
         speakFinish: '恭喜！運動全組完成！',
         speakPrepStart: '準備開始運動，第一組：',
         exercise: '動作',
+        minOneRoutine: '必須保留至少一個運動組合！'
       },
       'zh-CN': {
         title: '运动计时器 Pro',
         subtitle: 'iOS / Android 跨平台间歇训练助手',
         routines: '我的运动组合',
         addRoutine: '新建组合',
+        deleteRoutine: '删除组合',
         totalTime: '估算总运动时间',
         totalExercises: '总动作数',
         addExercise: '新增动作',
@@ -82,7 +88,7 @@
         nextRest: '下个：休息',
         nextEx: '下个：',
         nextSet: '下组：',
-        reset: '结束重来',
+        reset: '结束重叠',
         resume: '继续',
         pause: '暂停',
         skip: '跳过此段',
@@ -97,12 +103,14 @@
         speakFinish: '恭喜！运动全组完成！',
         speakPrepStart: '准备开始运动，第一组：',
         exercise: '动作',
+        minOneRoutine: '必须保留至少一个运动组合！'
       },
       'en-US': {
         title: 'Workout Timer Pro',
         subtitle: 'iOS & Android HIIT Companion',
         routines: 'My Routines',
         addRoutine: 'New Routine',
+        deleteRoutine: 'Delete Routine',
         totalTime: 'Estimated Total Time',
         totalExercises: 'Total Exercises',
         addExercise: 'Add Exercise',
@@ -138,6 +146,7 @@
         speakFinish: 'Congratulations! Workout complete!',
         speakPrepStart: 'Get ready, first exercise: ',
         exercise: 'Exercise',
+        minOneRoutine: 'At least one routine must be kept!'
       }
     };
 
@@ -163,12 +172,12 @@
       const t = TRANSLATIONS[lang] || TRANSLATIONS['zh-HK'];
 
       const [routines, setRoutines] = useState(() => {
-        const saved = localStorage.getItem('workout_routines_v5');
+        const saved = localStorage.getItem('workout_routines_v6');
         return saved ? JSON.parse(saved) : INITIAL_ROUTINES;
       });
 
       const [activeRoutineId, setActiveRoutineId] = useState(() => {
-        return localStorage.getItem('workout_active_id_v5') || (routines[0] ? routines[0].id : '');
+        return localStorage.getItem('workout_active_id_v6') || (routines[0] ? routines[0].id : '');
       });
 
       const currentRoutine = routines.find(r => r.id === activeRoutineId) || routines[0] || {
@@ -177,7 +186,7 @@
 
       const [soundEnabled, setSoundEnabled] = useState(true);
       const [view, setView] = useState('config');
-      const [status, setStatus] = useState('idle');
+      const [status, setStatus] = useState('idle'); // 'idle' | 'prep' | 'work' | 'rest' | 'paused' | 'finished'
       const [currentIndex, setCurrentIndex] = useState(0);
       const [currentSet, setCurrentSet] = useState(1);
       const [timeLeft, setTimeLeft] = useState(0);
@@ -188,8 +197,17 @@
       const wakeLockRef = useRef(null);
 
       useEffect(() => { localStorage.setItem('workout_lang', lang); }, [lang]);
-      useEffect(() => { localStorage.setItem('workout_routines_v5', JSON.stringify(routines)); }, [routines]);
-      useEffect(() => { localStorage.setItem('workout_active_id_v5', activeRoutineId); }, [activeRoutineId]);
+      useEffect(() => { localStorage.setItem('workout_routines_v6', JSON.stringify(routines)); }, [routines]);
+      useEffect(() => { localStorage.setItem('workout_active_id_v6', activeRoutineId); }, [activeRoutineId]);
+
+      // Ensure voices load on iOS Safari
+      useEffect(() => {
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.onvoiceschanged = () => {
+            window.speechSynthesis.getVoices();
+          };
+        }
+      }, []);
 
       const initAudio = () => {
         if (!audioCtxRef.current) {
@@ -219,13 +237,38 @@
         } catch (e) {}
       };
 
+      // Enhanced Multilingual Speech Synthesis
       const speak = (text) => {
         if (!('speechSynthesis' in window)) return;
         try {
           window.speechSynthesis.cancel();
           const utterance = new SpeechSynthesisUtterance(text);
           utterance.lang = lang;
-          utterance.rate = 1.05;
+
+          const voices = window.speechSynthesis.getVoices() || [];
+          if (voices.length > 0) {
+            let matchedVoice = null;
+            if (lang === 'zh-CN') {
+              matchedVoice = voices.find(v => 
+                v.lang === 'zh-CN' || v.lang === 'zh_CN' || v.lang === 'zh-Hans-CN' || 
+                v.name.includes('Ting-Ting') || v.name.includes('Mandarin') || v.name.includes('Putonghua') || 
+                (v.lang.startsWith('zh') && !v.lang.includes('HK') && !v.lang.includes('TW'))
+              );
+            } else if (lang === 'zh-HK') {
+              matchedVoice = voices.find(v => 
+                v.lang === 'zh-HK' || v.lang === 'zh_HK' || v.lang === 'zh-Hant-HK' || 
+                v.name.includes('Sin-Ji') || v.name.includes('Cantonese')
+              );
+            } else if (lang === 'en-US') {
+              matchedVoice = voices.find(v => v.lang === 'en-US' || v.lang === 'en_US' || v.lang.startsWith('en'));
+            }
+            if (matchedVoice) {
+              utterance.voice = matchedVoice;
+            }
+          }
+
+          utterance.rate = 1.0;
+          utterance.pitch = 1.0;
           window.speechSynthesis.speak(utterance);
         } catch (e) {}
       };
@@ -245,6 +288,7 @@
         }
       };
 
+      // Timer Engine
       useEffect(() => {
         if (status === 'paused' || status === 'idle' || status === 'finished') {
           if (timerRef.current) clearInterval(timerRef.current);
@@ -259,7 +303,8 @@
             }
             const nextTime = prev - 1;
 
-            if (status !== 'rest' && nextTime <= 3 && nextTime >= 1) {
+            // Countdown voice ONLY during 'prep' phase (or 'work' finish) to prevent rest voice overlap
+            if (status === 'prep' && nextTime <= 3 && nextTime >= 1) {
               playBeep(nextTime === 1 ? 1000 : 800, 0.2);
               speak(`${nextTime}`);
             }
@@ -271,12 +316,14 @@
         return () => { if (timerRef.current) clearInterval(timerRef.current); };
       }, [status, currentIndex, currentSet, currentRoutine, lang]);
 
+      // Smart Rest Deduction Logic
       const handlePhaseComplete = () => {
         const exercises = currentRoutine.exercises;
         const isLastExerciseInSet = (currentIndex === exercises.length - 1);
         const currentEx = exercises[currentIndex];
 
         if (status === 'prep') {
+          // Prep phase complete -> Start Work
           setStatus('work');
           setTimeLeft(currentEx.workTime);
           setPhaseDuration(currentEx.workTime);
@@ -284,45 +331,64 @@
           speak(`${t.speakStart}${currentEx.name}`);
         } else if (status === 'work') {
           if (isLastExerciseInSet) {
-            moveToNext();
-          } else if (currentEx.restTime > 0) {
-            setStatus('rest');
-            setTimeLeft(currentEx.restTime);
-            setPhaseDuration(currentEx.restTime);
-            playBeep(600, 0.3);
-            speak(t.speakRest);
+            // Last exercise in set -> NO REST
+            moveToNextSetOrFinish();
           } else {
-            moveToNext();
+            // Middle exercise -> Rest - 3s (Reserve last 3s for Next Prep Countdown)
+            const userRest = currentEx.restTime || 0;
+            if (userRest > 3) {
+              const actualRest = userRest - 3;
+              setStatus('rest');
+              setTimeLeft(actualRest);
+              setPhaseDuration(actualRest);
+              playBeep(600, 0.3);
+              speak(t.speakRest);
+            } else if (userRest > 0) {
+              // User set 1-3s rest -> Directly do 1-3s prep countdown for next
+              const nextEx = exercises[currentIndex + 1];
+              setStatus('prep');
+              setTimeLeft(userRest);
+              setPhaseDuration(userRest);
+              speak(`${t.speakPrepNext}${nextEx.name}`);
+            } else {
+              // User set 0s rest -> Directly start next work
+              const nextIdx = currentIndex + 1;
+              setCurrentIndex(nextIdx);
+              setStatus('work');
+              const nextEx = exercises[nextIdx];
+              setTimeLeft(nextEx.workTime);
+              setPhaseDuration(nextEx.workTime);
+              playBeep(1200, 0.4);
+              speak(`${t.speakStart}${nextEx.name}`);
+            }
           }
         } else if (status === 'rest') {
-          moveToNext();
-        }
-      };
-
-      const moveToNext = () => {
-        const exercises = currentRoutine.exercises;
-        if (currentIndex < exercises.length - 1) {
+          // Rest phase (userRest - 3s) ended -> Transition to 3s prep countdown for next exercise
           const nextIdx = currentIndex + 1;
           setCurrentIndex(nextIdx);
           setStatus('prep');
           setTimeLeft(3);
           setPhaseDuration(3);
-          speak(`${t.speakPrepNext}${exercises[nextIdx].name}`);
+          const nextEx = exercises[nextIdx];
+          speak(`${t.speakPrepNext}${nextEx.name}`);
+        }
+      };
+
+      const moveToNextSetOrFinish = () => {
+        if (currentSet < currentRoutine.sets) {
+          setCurrentSet(prev => prev + 1);
+          setCurrentIndex(0);
+          setStatus('prep');
+          setTimeLeft(5);
+          setPhaseDuration(5);
+          const firstEx = currentRoutine.exercises[0];
+          const msg = t.speakSetPrep.replace('{set}', (currentSet + 1).toString());
+          speak(`${msg}${firstEx.name}`);
         } else {
-          if (currentSet < currentRoutine.sets) {
-            setCurrentSet(prev => prev + 1);
-            setCurrentIndex(0);
-            setStatus('prep');
-            setTimeLeft(5);
-            setPhaseDuration(5);
-            const msg = t.speakSetPrep.replace('{set}', (currentSet + 1).toString());
-            speak(`${msg}${exercises[0].name}`);
-          } else {
-            setStatus('finished');
-            releaseWakeLock();
-            playBeep(1500, 0.6);
-            speak(t.speakFinish);
-          }
+          setStatus('finished');
+          releaseWakeLock();
+          playBeep(1500, 0.6);
+          speak(t.speakFinish);
         }
       };
 
@@ -355,6 +421,18 @@
         setActiveRoutineId(newId);
       };
 
+      const deleteRoutine = (routineIdToDelete) => {
+        if (routines.length <= 1) {
+          alert(t.minOneRoutine);
+          return;
+        }
+        const updated = routines.filter(r => r.id !== routineIdToDelete);
+        setRoutines(updated);
+        if (activeRoutineId === routineIdToDelete) {
+          setActiveRoutineId(updated[0].id);
+        }
+      };
+
       const calculateTotalTime = () => {
         if (!currentRoutine.exercises || currentRoutine.exercises.length === 0) return `0${t.sec}`;
         const exercises = currentRoutine.exercises;
@@ -372,6 +450,9 @@
         const secs = total % 60;
         return `${mins}${t.min} ${secs}${t.sec}`;
       };
+
+      // Displayed countdown number during Rest phase is adjusted (+3) to match user config seamlessly
+      const displayTimeLeft = status === 'rest' ? timeLeft + 3 : timeLeft;
 
       return (
         <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none pb-10">
@@ -391,20 +472,32 @@
           <main className="flex-1 max-w-md w-full mx-auto px-4 pt-4 flex flex-col">
             {view === 'config' && (
               <div className="space-y-4">
+                {/* Workout Routines Section with Delete Button */}
                 <section className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-slate-400">{t.routines}</span>
-                    <button onClick={createNewRoutine} className="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-semibold">+ {t.addRoutine}</button>
+                    <button onClick={createNewRoutine} className="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-semibold hover:bg-emerald-500/30 transition">+ {t.addRoutine}</button>
                   </div>
                   <div className="flex space-x-2 overflow-x-auto pb-1">
                     {routines.map(r => (
-                      <button
+                      <div
                         key={r.id}
-                        onClick={() => setActiveRoutineId(r.id)}
-                        className={`px-3 py-1.5 rounded-xl text-xs shrink-0 font-semibold border ${r.id === activeRoutineId ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
+                        className={`px-3 py-1.5 rounded-xl text-xs shrink-0 font-semibold border flex items-center space-x-2 transition ${r.id === activeRoutineId ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
                       >
-                        {r.name}
-                      </button>
+                        <span onClick={() => setActiveRoutineId(r.id)} className="cursor-pointer">{r.name}</span>
+                        {routines.length > 1 && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteRoutine(r.id);
+                            }}
+                            className="p-0.5 text-slate-500 hover:text-red-400 font-bold transition"
+                            title={t.deleteRoutine}
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
                     ))}
                   </div>
                 </section>
@@ -420,6 +513,7 @@
                   </div>
                 </div>
 
+                {/* Exercises List Editor */}
                 <section className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
                   <div className="flex justify-between items-center pb-2 border-b border-slate-800">
                     <input
@@ -456,7 +550,6 @@
                             }))} className="text-red-400 p-1 hover:text-red-300">🗑️</button>
                           </div>
 
-                          {/* Work & Rest Input with BOTH Manual Input & Dropdown */}
                           <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-slate-700/40">
                             {/* Work Time: Input + Dropdown */}
                             <div className="flex justify-between items-center bg-slate-900/80 px-2 py-1.5 rounded border border-slate-700/50">
@@ -564,6 +657,7 @@
               </div>
             )}
 
+            {/* Timer Screen */}
             {view === 'timer' && (
               <div className="space-y-6 py-4 flex-1 flex flex-col justify-between">
                 <div className="flex justify-between bg-slate-900 p-3 rounded-2xl text-xs border border-slate-800">
@@ -576,7 +670,7 @@
                     <div className="text-xs bg-slate-800 text-slate-200 px-3 py-1 rounded-full uppercase mb-2 font-bold border border-slate-700">
                       {status === 'prep' ? t.prepTitle : status === 'work' ? t.workTitle : status === 'rest' ? t.restTitle : status === 'paused' ? t.pausedTitle : t.finishedTitle}
                     </div>
-                    <div className="text-7xl font-mono font-black tracking-tight">{timeLeft}<span className="text-lg font-normal text-slate-400 ml-1">{t.seconds}</span></div>
+                    <div className="text-7xl font-mono font-black tracking-tight">{displayTimeLeft}<span className="text-lg font-normal text-slate-400 ml-1">{t.seconds}</span></div>
                     <div className="text-base font-bold text-slate-100 mt-2 truncate max-w-[200px]">
                       {status === 'prep' ? t.prepTitle : currentRoutine.exercises[currentIndex]?.name}
                     </div>
