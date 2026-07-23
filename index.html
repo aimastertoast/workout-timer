@@ -1,625 +1,663 @@
 <!DOCTYPE html>
-<html lang="zh-HK">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>運動計時器 Pro</title>
-  <!-- Tailwind CSS CDN -->
+  <title>Workout Timer Pro</title>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-  </style>
+  <!-- React 18 UMD -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- Babel for JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-slate-950 min-h-screen flex flex-col">
+<body class="bg-slate-950 text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-slate-950">
+  <div id="root"></div>
 
-  <!-- Header -->
-  <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center justify-between">
-    <div class="flex items-center space-x-2">
-      <div class="bg-gradient-to-tr from-emerald-500 to-teal-400 p-2 rounded-xl text-slate-950 font-bold shadow-lg">
-        🏋️
-      </div>
-      <div>
-        <h1 id="ui-title" class="font-extrabold text-base tracking-wide bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">運動計時器 Pro</h1>
-        <p id="ui-subtitle" class="text-[10px] text-slate-400">iOS / Android 跨平台間歇訓練助手</p>
-      </div>
-    </div>
-    <div class="flex items-center space-x-2">
-      <button id="btn-sound-toggle" class="p-2 rounded-lg bg-slate-800 border border-slate-700 text-emerald-400 text-xs">🔊</button>
-      <button id="btn-guide-toggle" class="p-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-xs">📱</button>
-    </div>
-  </header>
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
 
-  <!-- Main Content -->
-  <main class="flex-1 max-w-md w-full mx-auto px-4 pt-4 flex flex-col pb-10">
-
-    <!-- CONFIG VIEW -->
-    <div id="view-config" class="space-y-4">
-      
-      <!-- Routines Tabs -->
-      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 shadow-xl space-y-2.5">
-        <div class="flex items-center justify-between">
-          <span id="ui-routines-label" class="text-xs font-semibold text-slate-400 uppercase tracking-wider">我的運動組合</span>
-          <button id="btn-add-routine" class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold">+ 新增組合</button>
-        </div>
-        <div id="routines-list" class="flex items-center space-x-2 overflow-x-auto pb-1 no-scrollbar">
-          <!-- Dynamically Generated Routines -->
-        </div>
-      </section>
-
-      <!-- Summary Banner -->
-      <div class="bg-gradient-to-r from-emerald-950/60 to-teal-950/60 border border-emerald-800/40 rounded-2xl p-3.5 flex items-center justify-between shadow-lg">
-        <div>
-          <div id="ui-total-time-label" class="text-[11px] text-slate-400">估算總運動時間</div>
-          <div id="summary-total-time" class="text-base font-extrabold text-emerald-300">0分 0秒</div>
-        </div>
-        <div class="text-right">
-          <div id="ui-total-ex-label" class="text-[11px] text-slate-400">總動作數</div>
-          <div id="summary-total-ex" class="text-base font-extrabold text-slate-200">0</div>
-        </div>
-      </div>
-
-      <!-- Exercises List Editor -->
-      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-3">
-        <div class="flex items-center justify-between pb-2 border-b border-slate-800">
-          <input id="routine-name-input" type="text" class="bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-100 focus:outline-none focus:border-emerald-500" value="自訂運動">
-          <button id="btn-add-exercise" class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold">+ 新增動作</button>
-        </div>
-        <div id="exercises-container" class="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
-          <!-- Dynamically Generated Exercises -->
-        </div>
-      </section>
-
-      <!-- Options -->
-      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 shadow-xl space-y-3">
-        <div class="flex items-center justify-between">
-          <span id="ui-total-sets-label" class="text-xs font-semibold text-slate-300">總循環組數 (Sets)</span>
-          <div class="flex items-center space-x-2">
-            <button id="btn-sets-dec" class="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 font-bold text-sm">-</button>
-            <span id="sets-count-display" class="w-6 text-center text-emerald-400 font-extrabold text-sm">2</span>
-            <button id="btn-sets-inc" class="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 font-bold text-sm">+</button>
-          </div>
-        </div>
-        <div class="flex items-center justify-between border-t border-slate-800 pt-2.5">
-          <span id="ui-language-label" class="text-xs font-semibold text-slate-300">App 介面及語音語言</span>
-          <select id="lang-select" class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-200">
-            <option value="zh-HK">繁體中文 (廣東話)</option>
-            <option value="zh-CN">简体中文 (普通话)</option>
-            <option value="en-US">English</option>
-          </select>
-        </div>
-      </section>
-
-      <!-- Start Button -->
-      <button id="btn-start-workout" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black text-base tracking-wider shadow-lg shadow-emerald-950/50 active:scale-[0.98] transition">
-        ▶ 開始運動計時
-      </button>
-    </div>
-
-    <!-- TIMER VIEW -->
-    <div id="view-timer" class="space-y-5 hidden py-2">
-      <div class="flex items-center justify-between bg-slate-900 border border-slate-800 px-4 py-2.5 rounded-2xl">
-        <div>
-          <span id="ui-progress-label" class="text-[11px] text-slate-400">當前進度</span>
-          <div id="timer-progress-display" class="text-xs font-extrabold text-slate-200">1 / 4</div>
-        </div>
-        <div class="text-right">
-          <span id="ui-round-label" class="text-[11px] text-slate-400">循環組數</span>
-          <div id="timer-set-display" class="text-xs font-extrabold text-emerald-400">1 / 2</div>
-        </div>
-      </div>
-
-      <!-- Ring Countdown -->
-      <div class="flex flex-col items-center justify-center my-4">
-        <div id="timer-circle" class="relative w-64 h-64 rounded-full bg-slate-900 border-4 border-emerald-500 shadow-2xl flex flex-col items-center justify-center p-4 text-center transition-all duration-300">
-          <div id="timer-badge" class="bg-slate-950/60 px-3 py-0.5 rounded-full text-[11px] font-bold uppercase mb-2 border border-white/10 text-white">準備倒數</div>
-          <div id="timer-seconds" class="text-6xl font-black font-mono tracking-tight text-white">5<span class="text-base font-normal text-slate-300 ml-1">秒</span></div>
-          <div id="timer-exercise-name" class="text-base font-bold text-white max-w-[180px] truncate mt-1">開合跳</div>
-          <div id="timer-next-preview" class="text-[11px] text-slate-300/80 mt-1 max-w-[180px] truncate">下個：休息</div>
-        </div>
-      </div>
-
-      <!-- Action Buttons -->
-      <div class="grid grid-cols-3 gap-3">
-        <button id="btn-timer-reset" class="py-3 rounded-2xl bg-slate-800 border border-slate-700 text-slate-200 font-bold text-xs active:scale-95">🔄 重設</button>
-        <button id="btn-timer-pause" class="py-3 rounded-2xl bg-emerald-500 border border-emerald-400 text-slate-950 font-bold text-xs active:scale-95">⏸ 暫停</button>
-        <button id="btn-timer-skip" class="py-3 rounded-2xl bg-slate-800 border border-slate-700 text-slate-200 font-bold text-xs active:scale-95">⏭ 跳過</button>
-      </div>
-    </div>
-
-  </main>
-
-  <!-- iOS / Android Install Guide Modal -->
-  <div id="modal-install" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 hidden">
-    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-sm w-full space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
-        <h3 id="ui-install-title" class="font-bold text-sm text-slate-100">新增至手機主畫面</h3>
-        <button id="btn-close-modal" class="text-slate-400 font-bold p-1">✕</button>
-      </div>
-      <p id="ui-install-desc" class="text-xs text-slate-300 leading-relaxed">將此網頁加入主畫面後，可以全螢幕獨立運行：</p>
-      <div class="space-y-2 text-xs text-slate-300">
-        <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700/50">
-          <div class="font-bold text-emerald-400">iOS (iPhone Safari):</div>
-          <div>1. 點擊 Safari 底部「分享」圖示</div>
-          <div>2. 選取「加至主畫面」 (Add to Home Screen)</div>
-        </div>
-        <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700/50">
-          <div class="font-bold text-teal-400">Android (Chrome):</div>
-          <div>1. 點擊右上角選單 (三個點)</div>
-          <div>2. 選取「安裝應用程式」或「新增至主螢幕」</div>
-        </div>
-      </div>
-      <button id="btn-understand" class="w-full py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs">明白！</button>
-    </div>
-  </div>
-
-  <!-- JavaScript Logic -->
-  <script>
-    // Translations Dictionary
     const TRANSLATIONS = {
       'zh-HK': {
         title: '運動計時器 Pro',
         subtitle: 'iOS / Android 跨平台間歇訓練助手',
         routines: '我的運動組合',
-        addRoutine: '+ 新增組合',
+        addRoutine: '建立新組合',
         totalTime: '估算總運動時間',
-        totalEx: '總動作數',
-        addExercise: '+ 新增動作',
-        totalSets: '總循環組數 (Sets)',
-        language: 'App 介面及語音語言',
-        start: '▶ 開始運動計時',
-        progress: '當前進度',
-        round: '循環組數',
-        prep: '準備倒數',
-        work: '運動進行中',
-        rest: '休息時間',
-        paused: '暫停中',
-        finished: '完成運動！',
-        reset: '🔄 結束重來',
-        resume: '▶ 繼續',
-        pause: '⏸ 暫停',
-        skip: '⏭ 跳過此段',
+        totalExercises: '總動作數',
+        addExercise: '新增動作',
+        noExercises: '點擊「新增動作」開始設定',
+        workTimeLabel: '運動時間',
+        restTimeLabel: '休息時間',
+        noRestLabel: '最後動作（無休息）',
+        totalSets: '總循環組數',
+        appLanguage: '介面及語音語言',
+        startWorkout: '開始運動計時',
+        currentProgress: '當前進度',
+        currentSet: '循環組數',
+        prepTitle: '準備倒數',
+        workTitle: '運動進行中',
+        restTitle: '休息時間',
+        pausedTitle: '暫停中',
+        finishedTitle: '完成運動！',
+        nextRest: '下個：休息',
+        nextEx: '下個：',
+        nextSet: '下組：',
+        reset: '結束重來',
+        resume: '繼續',
+        pause: '暫停',
+        skip: '跳過此段',
+        installGuide: '新增至手機主畫面',
+        installDesc: '將此網頁加入主畫面後，可以全螢幕獨立運行：',
+        iosStep1: '於 Safari 點擊底部「分享」圖示',
+        iosStep2: '選取「加至主畫面」 (Add to Home Screen)',
+        androidStep1: '於 Chrome 點擊右上角選單 (三個點)',
+        androidStep2: '選取「安裝應用程式」或「新增至主螢幕」',
+        understand: '明白！',
+        actionNamePlaceholder: '動作名稱',
+        quickSelect: '⚡速選',
+        seconds: '秒',
+        min: '分',
+        sec: '秒',
         speakStart: '開始：',
         speakRest: '休息時間',
         speakPrepNext: '準備下個動作：',
         speakSetPrep: '第 {set} 組準備，動作：',
         speakFinish: '恭喜！運動全組完成！',
         speakPrepStart: '準備開始運動，第一組：',
-        sec: '秒', min: '分', ex: '動作'
+        exercise: '動作',
       },
       'zh-CN': {
         title: '运动计时器 Pro',
         subtitle: 'iOS / Android 跨平台间歇训练助手',
         routines: '我的运动组合',
-        addRoutine: '+ 新建组合',
+        addRoutine: '新建组合',
         totalTime: '估算总运动时间',
-        totalEx: '总动作数',
-        addExercise: '+ 新增动作',
-        totalSets: '总循环组数 (Sets)',
-        language: 'App 界面及语音语言',
-        start: '▶ 开始运动计时',
-        progress: '当前进度',
-        round: '循环组数',
-        prep: '准备倒计时',
-        work: '运动进行中',
-        rest: '休息时间',
-        paused: '暂停中',
-        finished: '完成运动！',
-        reset: '🔄 结束重来',
-        resume: '▶ 继续',
-        pause: '⏸ 暂停',
-        skip: '⏭ 跳过此段',
+        totalExercises: '总动作数',
+        addExercise: '新增动作',
+        noExercises: '点击“新增动作”开始设置',
+        workTimeLabel: '运动时间',
+        restTimeLabel: '休息时间',
+        noRestLabel: '最后动作（无休息）',
+        totalSets: '总循环组数',
+        appLanguage: '界面及语音语言',
+        startWorkout: '开始运动计时',
+        currentProgress: '当前进度',
+        currentSet: '循环组数',
+        prepTitle: '准备倒计时',
+        workTitle: '运动进行中',
+        restTitle: '休息时间',
+        pausedTitle: '暂停中',
+        finishedTitle: '完成运动！',
+        nextRest: '下个：休息',
+        nextEx: '下个：',
+        nextSet: '下组：',
+        reset: '结束重来',
+        resume: '继续',
+        pause: '暂停',
+        skip: '跳过此段',
+        installGuide: '添加至手机主屏幕',
+        installDesc: '将此网页添加至主屏幕后，可以全屏独立运行：',
+        iosStep1: '在 Safari 点击底部“分享”图标',
+        iosStep2: '选择“添加到主屏幕” (Add to Home Screen)',
+        androidStep1: '在 Chrome 点击右上角菜单 (三个点)',
+        androidStep2: '选择“安装应用”或“添加到主屏幕”',
+        understand: '明白！',
+        actionNamePlaceholder: '动作名称',
+        quickSelect: '⚡速选',
+        seconds: '秒',
+        min: '分',
+        sec: '秒',
         speakStart: '开始：',
         speakRest: '休息时间',
         speakPrepNext: '准备下个动作：',
         speakSetPrep: '第 {set} 组准备，动作：',
         speakFinish: '恭喜！运动全组完成！',
         speakPrepStart: '准备开始运动，第一组：',
-        sec: '秒', min: '分', ex: '动作'
+        exercise: '动作',
       },
       'en-US': {
         title: 'Workout Timer Pro',
         subtitle: 'iOS & Android HIIT Companion',
-        routines: 'Workout Routines',
-        addRoutine: '+ Add Routine',
+        routines: 'My Routines',
+        addRoutine: 'New Routine',
         totalTime: 'Estimated Total Time',
-        totalEx: 'Total Exercises',
-        addExercise: '+ Add Exercise',
+        totalExercises: 'Total Exercises',
+        addExercise: 'Add Exercise',
+        noExercises: 'Click "Add Exercise" to start',
+        workTimeLabel: 'Work Time',
+        restTimeLabel: 'Rest Time',
+        noRestLabel: 'Last Exercise (No Rest)',
         totalSets: 'Total Sets',
-        language: 'App Language & Voice',
-        start: '▶ Start Workout',
-        progress: 'Progress',
-        round: 'Round',
-        prep: 'Get Ready',
-        work: 'Work Time',
-        rest: 'Rest Time',
-        paused: 'Paused',
-        finished: 'Workout Complete!',
-        reset: '🔄 Reset',
-        resume: '▶ Resume',
-        pause: '⏸ Pause',
-        skip: '⏭ Skip',
+        appLanguage: 'Language & Voice',
+        startWorkout: 'Start Workout',
+        currentProgress: 'Progress',
+        currentSet: 'Round',
+        prepTitle: 'Get Ready',
+        workTitle: 'Work Time',
+        restTitle: 'Rest Time',
+        pausedTitle: 'Paused',
+        finishedTitle: 'Workout Complete!',
+        nextRest: 'Next: Rest',
+        nextEx: 'Next: ',
+        nextSet: 'Next Round: ',
+        reset: 'Reset',
+        resume: 'Resume',
+        pause: 'Pause',
+        skip: 'Skip',
+        installGuide: 'Add to Home Screen',
+        installDesc: 'Add this web app to your home screen for full-screen experience:',
+        iosStep1: 'Tap "Share" button at bottom of Safari',
+        iosStep2: 'Select "Add to Home Screen"',
+        androidStep1: 'Tap top-right menu icon (3 dots) in Chrome',
+        androidStep2: 'Select "Install app" or "Add to Home Screen"',
+        understand: 'Got it!',
+        actionNamePlaceholder: 'Exercise Name',
+        quickSelect: '⚡Quick',
+        seconds: 's',
+        min: 'm',
+        sec: 's',
         speakStart: 'Start: ',
         speakRest: 'Rest time',
         speakPrepNext: 'Get ready for: ',
         speakSetPrep: 'Round {set} ready, action: ',
         speakFinish: 'Congratulations! Workout complete!',
         speakPrepStart: 'Get ready, first exercise: ',
-        sec: 's', min: 'm', ex: 'Exercise'
+        exercise: 'Exercise',
       }
     };
 
+    // Seconds Options Dropdown Values
+    const WORK_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 75, 90, 105, 120, 150, 180, 210, 240, 270, 300, 360, 420, 480, 540, 600];
+    const REST_OPTIONS = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 75, 90, 105, 120, 150, 180, 210, 240, 270, 300];
+
     const INITIAL_ROUTINES = [
       {
-        id: 'r1',
+        id: 'routine-1',
         name: 'TABATA 高強度訓練',
         sets: 8,
         exercises: [
           { id: '1', name: '開合跳 (Jumping Jacks)', workTime: 20, restTime: 10 },
           { id: '2', name: '深蹲 (Squats)', workTime: 20, restTime: 10 },
           { id: '3', name: '波比跳 (Burpees)', workTime: 20, restTime: 10 },
-          { id: '4', name: '高抬腿 (High Knees)', workTime: 20, restTime: 10 }
+          { id: '4', name: '高抬腿 (High Knees)', workTime: 20, restTime: 10 },
         ]
       },
       {
-        id: 'r2',
-        name: '核心肌群強化',
+        id: 'routine-2',
+        name: '核心肌群強化 Core Workout',
         sets: 3,
         exercises: [
           { id: '1', name: '平板支撐 (Plank)', workTime: 45, restTime: 15 },
           { id: '2', name: '仰臥起坐 (Crunches)', workTime: 45, restTime: 15 },
-          { id: '3', name: '俄羅斯轉體 (Russian Twists)', workTime: 40, restTime: 15 }
+          { id: '3', name: '俄羅斯轉體 (Russian Twists)', workTime: 40, restTime: 15 },
         ]
       }
     ];
 
-    // State Variables
-    let lang = localStorage.getItem('workout_lang') || 'zh-HK';
-    let routines = JSON.parse(localStorage.getItem('workout_routines_v4')) || INITIAL_ROUTINES;
-    let activeRoutineId = localStorage.getItem('workout_active_id') || routines[0].id;
-    let soundEnabled = true;
+    function App() {
+      const [lang, setLang] = useState(() => localStorage.getItem('workout_lang') || 'zh-HK');
+      const t = TRANSLATIONS[lang] || TRANSLATIONS['zh-HK'];
 
-    // Timer Runtime States
-    let timerInterval = null;
-    let status = 'idle'; // prep, work, rest, paused, finished
-    let currentSet = 1;
-    let currentIndex = 0;
-    let timeLeft = 0;
-    let phaseDuration = 1;
-    let audioCtx = null;
-    let wakeLock = null;
+      const [routines, setRoutines] = useState(() => {
+        const saved = localStorage.getItem('workout_routines_v4');
+        return saved ? JSON.parse(saved) : INITIAL_ROUTINES;
+      });
 
-    // DOM Elements
-    const getActiveRoutine = () => routines.find(r => r.id === activeRoutineId) || routines[0];
+      const [activeRoutineId, setActiveRoutineId] = useState(() => {
+        return localStorage.getItem('workout_active_id_v4') || (routines[0] ? routines[0].id : '');
+      });
 
-    function initAudio() {
-      if (!audioCtx) {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (AudioCtx) audioCtx = new AudioCtx();
-      }
-      if (audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-    }
+      const currentRoutine = routines.find(r => r.id === activeRoutineId) || routines[0] || {
+        id: 'temp', name: '自訂運動', sets: 2, exercises: []
+      };
 
-    function playBeep(freq = 800, duration = 0.15) {
-      if (!soundEnabled) return;
-      try {
-        initAudio();
-        if (!audioCtx) return;
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + duration);
-      } catch (e) {}
-    }
+      const [soundEnabled, setSoundEnabled] = useState(true);
+      const [view, setView] = useState('config');
+      const [status, setStatus] = useState('idle'); // 'idle' | 'prep' | 'work' | 'rest' | 'paused' | 'finished'
+      const [currentIndex, setCurrentIndex] = useState(0);
+      const [currentSet, setCurrentSet] = useState(1);
+      const [timeLeft, setTimeLeft] = useState(0);
+      const [phaseDuration, setPhaseDuration] = useState(1);
+      const [showInstallGuide, setShowInstallGuide] = useState(false);
 
-    function speak(text) {
-      if (!('speechSynthesis' in window)) return;
-      try {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = lang;
-        utterance.rate = 1.05;
-        window.speechSynthesis.speak(utterance);
-      } catch (e) {}
-    }
+      const timerRef = useRef(null);
+      const audioCtxRef = useRef(null);
+      const wakeLockRef = useRef(null);
 
-    async function requestWakeLock() {
-      try {
-        if ('wakeLock' in navigator) {
-          wakeLock = await navigator.wakeLock.request('screen');
+      useEffect(() => { localStorage.setItem('workout_lang', lang); }, [lang]);
+      useEffect(() => { localStorage.setItem('workout_routines_v4', JSON.stringify(routines)); }, [routines]);
+      useEffect(() => { localStorage.setItem('workout_active_id_v4', activeRoutineId); }, [activeRoutineId]);
+
+      const initAudio = () => {
+        if (!audioCtxRef.current) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) audioCtxRef.current = new AudioCtx();
         }
-      } catch (e) {}
-    }
+        if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+          audioCtxRef.current.resume();
+        }
+      };
 
-    function releaseWakeLock() {
-      if (wakeLock) {
-        wakeLock.release();
-        wakeLock = null;
-      }
-    }
+      const playBeep = (freq = 800, duration = 0.15) => {
+        if (!soundEnabled) return;
+        try {
+          initAudio();
+          if (!audioCtxRef.current) return;
+          const ctx = audioCtxRef.current;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.frequency.setValueAtTime(freq, ctx.currentTime);
+          gain.gain.setValueAtTime(0.3, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + duration);
+        } catch (e) {}
+      };
 
-    function render() {
-      const t = TRANSLATIONS[lang] || TRANSLATIONS['zh-HK'];
-      const r = getActiveRoutine();
+      const speak = (text) => {
+        if (!('speechSynthesis' in window)) return;
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = lang;
+          utterance.rate = 1.05;
+          window.speechSynthesis.speak(utterance);
+        } catch (e) {}
+      };
 
-      // UI Labels
-      document.getElementById('ui-title').textContent = t.title;
-      document.getElementById('ui-subtitle').textContent = t.subtitle;
-      document.getElementById('ui-routines-label').textContent = t.routines;
-      document.getElementById('btn-add-routine').textContent = t.addRoutine;
-      document.getElementById('ui-total-time-label').textContent = t.totalTime;
-      document.getElementById('ui-total-ex-label').textContent = t.totalEx;
-      document.getElementById('btn-add-exercise').textContent = t.addExercise;
-      document.getElementById('ui-total-sets-label').textContent = t.totalSets;
-      document.getElementById('ui-language-label').textContent = t.language;
-      document.getElementById('btn-start-workout').textContent = t.start;
-      document.getElementById('lang-select').value = lang;
-
-      // Routines Tabs
-      const routinesContainer = document.getElementById('routines-list');
-      routinesContainer.innerHTML = routines.map(rt => `
-        <button onclick="switchRoutine('${rt.id}')" class="px-3 py-1.5 rounded-xl text-xs shrink-0 font-semibold border ${rt.id === activeRoutineId ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300' : 'bg-slate-800 border-slate-700 text-slate-400'}">
-          ${rt.name}
-        </button>
-      `).join('');
-
-      // Routine Detail Inputs
-      document.getElementById('routine-name-input').value = r.name;
-      document.getElementById('sets-count-display').textContent = r.sets;
-
-      // Exercises
-      const exercisesContainer = document.getElementById('exercises-container');
-      exercisesContainer.innerHTML = r.exercises.map((ex, idx) => `
-        <div class="bg-slate-800 p-2.5 rounded-xl space-y-2 text-xs">
-          <div class="flex items-center space-x-2">
-            <span class="w-4 h-4 bg-slate-700 rounded-full flex items-center justify-center text-[10px]">${idx + 1}</span>
-            <input type="text" onchange="updateExName('${ex.id}', this.value)" value="${ex.name}" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white flex-1" />
-            <button onclick="deleteEx('${ex.id}')" class="text-red-400">🗑️</button>
-          </div>
-          <div class="grid grid-cols-2 gap-2 text-[11px]">
-            <div class="flex justify-between bg-slate-900 px-2 py-1 rounded">
-              <span class="text-emerald-400">運動(秒):</span>
-              <input type="number" onchange="updateExWork('${ex.id}', this.value)" value="${ex.workTime}" class="w-10 bg-slate-800 text-right text-emerald-300 font-bold" />
-            </div>
-            <div class="flex justify-between bg-slate-900 px-2 py-1 rounded">
-              <span class="text-amber-400">休息(秒):</span>
-              <input type="number" onchange="updateExRest('${ex.id}', this.value)" value="${ex.restTime}" class="w-10 bg-slate-800 text-right text-amber-300 font-bold" />
-            </div>
-          </div>
-        </div>
-      `).join('');
-
-      // Calculated Total
-      const singleSet = r.exercises.reduce((acc, ex) => acc + ex.workTime + ex.restTime, 0);
-      const total = (singleSet * r.sets) + 5;
-      document.getElementById('summary-total-time').textContent = `${Math.floor(total / 60)}${t.min} ${total % 60}${t.sec}`;
-      document.getElementById('summary-total-ex').textContent = r.exercises.length;
-
-      // Persist State
-      localStorage.setItem('workout_lang', lang);
-      localStorage.setItem('workout_routines_v4', JSON.stringify(routines));
-      localStorage.setItem('workout_active_id', activeRoutineId);
-    }
-
-    // Helper Action Functions
-    window.switchRoutine = (id) => { activeRoutineId = id; render(); };
-    window.updateExName = (id, val) => {
-      const r = getActiveRoutine();
-      const ex = r.exercises.find(e => e.id === id);
-      if (ex) ex.name = val;
-      render();
-    };
-    window.updateExWork = (id, val) => {
-      const r = getActiveRoutine();
-      const ex = r.exercises.find(e => e.id === id);
-      if (ex) ex.workTime = Math.max(1, parseInt(val) || 0);
-      render();
-    };
-    window.updateExRest = (id, val) => {
-      const r = getActiveRoutine();
-      const ex = r.exercises.find(e => e.id === id);
-      if (ex) ex.restTime = Math.max(0, parseInt(val) || 0);
-      render();
-    };
-    window.deleteEx = (id) => {
-      const r = getActiveRoutine();
-      r.exercises = r.exercises.filter(e => e.id !== id);
-      render();
-    };
-
-    function startWorkout() {
-      const r = getActiveRoutine();
-      if (!r.exercises.length) return;
-      initAudio();
-      requestWakeLock();
-      document.getElementById('view-config').classList.add('hidden');
-      document.getElementById('view-timer').classList.remove('hidden');
-
-      currentIndex = 0;
-      currentSet = 1;
-      status = 'prep';
-      timeLeft = 5;
-      phaseDuration = 5;
-
-      const t = TRANSLATIONS[lang] || TRANSLATIONS['zh-HK'];
-      speak(`${t.speakPrepStart}${r.exercises[0].name}`);
-      runTimerLoop();
-    }
-
-    function runTimerLoop() {
-      if (timerInterval) clearInterval(timerInterval);
-      timerInterval = setInterval(() => {
-        if (status === 'paused') return;
-
-        if (timeLeft <= 1) {
-          handlePhaseComplete();
-        } else {
-          timeLeft--;
-          if (timeLeft <= 3 && timeLeft >= 1) {
-            playBeep(timeLeft === 1 ? 1000 : 800, 0.2);
-            speak(`${timeLeft}`);
+      const requestWakeLock = async () => {
+        try {
+          if ('wakeLock' in navigator) {
+            wakeLockRef.current = await navigator.wakeLock.request('screen');
           }
+        } catch (err) {}
+      };
+
+      const releaseWakeLock = () => {
+        if (wakeLockRef.current) {
+          wakeLockRef.current.release();
+          wakeLockRef.current = null;
         }
-        updateTimerDisplay();
-      }, 1000);
-      updateTimerDisplay();
-    }
+      };
 
-    function handlePhaseComplete() {
-      const r = getActiveRoutine();
-      const currentEx = r.exercises[currentIndex];
-      const t = TRANSLATIONS[lang] || TRANSLATIONS['zh-HK'];
+      // Timer Engine
+      useEffect(() => {
+        if (status === 'paused' || status === 'idle' || status === 'finished') {
+          if (timerRef.current) clearInterval(timerRef.current);
+          return;
+        }
 
-      if (status === 'prep') {
-        status = 'work';
-        timeLeft = currentEx.workTime;
-        phaseDuration = currentEx.workTime;
-        playBeep(1200, 0.4);
-        speak(`${t.speakStart}${currentEx.name}`);
-      } else if (status === 'work') {
-        if (currentEx.restTime > 0) {
-          status = 'rest';
-          timeLeft = currentEx.restTime;
-          phaseDuration = currentEx.restTime;
-          playBeep(600, 0.3);
-          speak(t.speakRest);
-        } else {
+        timerRef.current = setInterval(() => {
+          setTimeLeft((prev) => {
+            if (prev <= 1) {
+              handlePhaseComplete();
+              return 0;
+            }
+            const nextTime = prev - 1;
+
+            // FIX: DO NOT play 3-2-1 countdown voice during 'rest' period!
+            // Only play 3-2-1 during 'prep' or 'work' phases to prevent voice overlaps.
+            if (status !== 'rest' && nextTime <= 3 && nextTime >= 1) {
+              playBeep(nextTime === 1 ? 1000 : 800, 0.2);
+              speak(`${nextTime}`);
+            }
+
+            return nextTime;
+          });
+        }, 1000);
+
+        return () => { if (timerRef.current) clearInterval(timerRef.current); };
+      }, [status, currentIndex, currentSet, currentRoutine, lang]);
+
+      const handlePhaseComplete = () => {
+        const exercises = currentRoutine.exercises;
+        const isLastExerciseInSet = (currentIndex === exercises.length - 1);
+        const currentEx = exercises[currentIndex];
+
+        if (status === 'prep') {
+          // Transition from PREP to WORK
+          setStatus('work');
+          setTimeLeft(currentEx.workTime);
+          setPhaseDuration(currentEx.workTime);
+          playBeep(1200, 0.4);
+          speak(`${t.speakStart}${currentEx.name}`);
+        } else if (status === 'work') {
+          // FIX: If it's the last exercise in the list for this set, SKIP REST completely!
+          if (isLastExerciseInSet) {
+            moveToNext();
+          } else if (currentEx.restTime > 0) {
+            // Transition to REST
+            setStatus('rest');
+            setTimeLeft(currentEx.restTime);
+            setPhaseDuration(currentEx.restTime);
+            playBeep(600, 0.3);
+            speak(t.speakRest);
+          } else {
+            moveToNext();
+          }
+        } else if (status === 'rest') {
           moveToNext();
         }
-      } else if (status === 'rest') {
-        moveToNext();
-      }
-    }
+      };
 
-    function moveToNext() {
-      const r = getActiveRoutine();
-      const t = TRANSLATIONS[lang] || TRANSLATIONS['zh-HK'];
-
-      if (currentIndex < r.exercises.length - 1) {
-        currentIndex++;
-        status = 'prep';
-        timeLeft = 3;
-        phaseDuration = 3;
-        speak(`${t.speakPrepNext}${r.exercises[currentIndex].name}`);
-      } else {
-        if (currentSet < r.sets) {
-          currentSet++;
-          currentIndex = 0;
-          status = 'prep';
-          timeLeft = 5;
-          phaseDuration = 5;
-          const msg = t.speakSetPrep.replace('{set}', currentSet.toString());
-          speak(`${msg}${r.exercises[0].name}`);
+      const moveToNext = () => {
+        const exercises = currentRoutine.exercises;
+        if (currentIndex < exercises.length - 1) {
+          const nextIdx = currentIndex + 1;
+          setCurrentIndex(nextIdx);
+          setStatus('prep');
+          setTimeLeft(3);
+          setPhaseDuration(3);
+          speak(`${t.speakPrepNext}${exercises[nextIdx].name}`);
         } else {
-          status = 'finished';
-          clearInterval(timerInterval);
-          releaseWakeLock();
-          playBeep(1500, 0.6);
-          speak(t.speakFinish);
+          if (currentSet < currentRoutine.sets) {
+            setCurrentSet(prev => prev + 1);
+            setCurrentIndex(0);
+            setStatus('prep');
+            setTimeLeft(5);
+            setPhaseDuration(5);
+            const msg = t.speakSetPrep.replace('{set}', (currentSet + 1).toString());
+            speak(`${msg}${exercises[0].name}`);
+          } else {
+            setStatus('finished');
+            releaseWakeLock();
+            playBeep(1500, 0.6);
+            speak(t.speakFinish);
+          }
         }
-      }
+      };
+
+      const startWorkout = () => {
+        if (!currentRoutine.exercises || currentRoutine.exercises.length === 0) return;
+        initAudio();
+        requestWakeLock();
+        setView('timer');
+        setCurrentIndex(0);
+        setCurrentSet(1);
+        setStatus('prep');
+        setTimeLeft(5);
+        setPhaseDuration(5);
+        speak(`${t.speakPrepStart}${currentRoutine.exercises[0].name}`);
+      };
+
+      const updateCurrentRoutine = (updater) => {
+        setRoutines(routines.map(r => r.id === currentRoutine.id ? updater(r) : r));
+      };
+
+      const createNewRoutine = () => {
+        const newId = `routine-${Date.now()}`;
+        const newR = {
+          id: newId,
+          name: `${t.routines} ${routines.length + 1}`,
+          sets: 2,
+          exercises: [{ id: '1', name: `${t.exercise} 1`, workTime: 30, restTime: 10 }]
+        };
+        setRoutines([...routines, newR]);
+        setActiveRoutineId(newId);
+      };
+
+      // FIX: Calculate total time excluding rest for the last exercise of each set
+      const calculateTotalTime = () => {
+        if (!currentRoutine.exercises || currentRoutine.exercises.length === 0) return `0${t.sec}`;
+        const exercises = currentRoutine.exercises;
+        
+        let singleSetTime = 0;
+        exercises.forEach((ex, idx) => {
+          singleSetTime += ex.workTime;
+          // Only add rest if NOT the last exercise in the set
+          if (idx < exercises.length - 1) {
+            singleSetTime += ex.restTime;
+          }
+        });
+
+        const total = (singleSetTime * currentRoutine.sets) + 5;
+        const mins = Math.floor(total / 60);
+        const secs = total % 60;
+        return `${mins}${t.min} ${secs}${t.sec}`;
+      };
+
+      const progressPercent = phaseDuration > 0 ? ((phaseDuration - timeLeft) / phaseDuration) * 100 : 0;
+
+      return (
+        <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none pb-10">
+          {/* Header */}
+          <header className="sticky top-0 z-30 bg-slate-900/90 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className="bg-emerald-500 p-2 rounded-xl text-slate-950 font-bold text-lg">🏋️</div>
+              <div>
+                <h1 className="font-extrabold text-base text-emerald-400">{t.title}</h1>
+                <p className="text-[10px] text-slate-400">{t.subtitle}</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button onClick={() => setSoundEnabled(!soundEnabled)} className="p-2 bg-slate-800 rounded-lg text-sm">
+                {soundEnabled ? '🔊' : '🔇'}
+              </button>
+              <button onClick={() => setShowInstallGuide(true)} className="p-2 bg-slate-800 rounded-lg text-sm">📱</button>
+            </div>
+          </header>
+
+          <main className="flex-1 max-w-md w-full mx-auto px-4 pt-4 flex flex-col">
+            {view === 'config' && (
+              <div className="space-y-4">
+                {/* Routines Carousel */}
+                <section className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-slate-400">{t.routines}</span>
+                    <button onClick={createNewRoutine} className="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-semibold">+ {t.addRoutine}</button>
+                  </div>
+                  <div className="flex space-x-2 overflow-x-auto pb-1">
+                    {routines.map(r => (
+                      <button
+                        key={r.id}
+                        onClick={() => setActiveRoutineId(r.id)}
+                        className={`px-3 py-1.5 rounded-xl text-xs shrink-0 font-semibold border ${r.id === activeRoutineId ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
+                      >
+                        {r.name}
+                      </button>
+                          {/* FIX: Dual Input - Manual Number Input + Quick Dropdown */}
+                          <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-slate-700/40">
+                            {/* Work Time: Manual + Dropdown */}
+                            <div className="flex flex-col gap-1 bg-slate-900/80 p-1.5 rounded border border-slate-700/50">
+                              <div className="flex justify-between items-center">
+                                <span className="text-emerald-400 font-medium">{t.workTimeLabel}:</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <input
+                                  type="number"
+                                  min="1"
+                                  max="600"
+                                  value={ex.workTime}
+                                  onChange={(e) => {
+                                    const val = Math.max(1, parseInt(e.target.value) || 1);
+                                    updateCurrentRoutine(r => ({
+                                      ...r,
+                                      exercises: r.exercises.map(item => item.id === ex.id ? { ...item, workTime: val } : item)
+                                    }));
+                                  }}
+                                  className="w-12 bg-slate-800 text-emerald-300 font-bold border border-slate-600 rounded px-1 py-0.5 text-xs text-center focus:outline-none focus:border-emerald-500"
+                                />
+                                <select
+                                  value={WORK_OPTIONS.includes(ex.workTime) ? ex.workTime : ''}
+                                  onChange={(e) => {
+                                    if (e.target.value) {
+                                      const val = parseInt(e.target.value);
+                                      updateCurrentRoutine(r => ({
+                                        ...r,
+                                        exercises: r.exercises.map(item => item.id === ex.id ? { ...item, workTime: val } : item)
+                                      }));
+                                    }
+                                  }}
+                                  className="bg-slate-800 text-slate-300 border border-slate-600 rounded px-1 py-0.5 text-[10px] focus:outline-none focus:border-emerald-500 flex-1 min-w-0"
+                                >
+                                  <option value="" disabled>{WORK_OPTIONS.includes(ex.workTime) ? t.quickSelect : '✏️ ' + ex.workTime + t.sec}</option>
+                                  {WORK_OPTIONS.map(sec => (
+                                    <option key={sec} value={sec}>{sec} {t.sec}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            </div>
+
+                            {/* Rest Time: Manual + Dropdown */}
+                            <div className="flex flex-col gap-1 bg-slate-900/80 p-1.5 rounded border border-slate-700/50 justify-center">
+                              {isLast ? (
+                                <div className="text-center py-1">
+                                  <span className="text-amber-400 font-medium block">{t.restTimeLabel}:</span>
+                                  <span className="text-slate-400 text-[10px] italic font-semibold">{t.noRestLabel}</span>
+                                </div>
+                              ) : (
+                                <>
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-amber-400 font-medium">{t.restTimeLabel}:</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      max="300"
+                                      value={ex.restTime}
+                                      onChange={(e) => {
+                                        const val = Math.max(0, parseInt(e.target.value) || 0);
+                                        updateCurrentRoutine(r => ({
+                                          ...r,
+                                          exercises: r.exercises.map(item => item.id === ex.id ? { ...item, restTime: val } : item)
+                                        }));
+                                      }}
+                                      className="w-12 bg-slate-800 text-amber-300 font-bold border border-slate-600 rounded px-1 py-0.5 text-xs text-center focus:outline-none focus:border-amber-500"
+                                    />
+                                    <select
+                                      value={REST_OPTIONS.includes(ex.restTime) ? ex.restTime : ''}
+                                      onChange={(e) => {
+                                        if (e.target.value !== '') {
+                                          const val = parseInt(e.target.value);
+                                          updateCurrentRoutine(r => ({
+                                            ...r,
+                                            exercises: r.exercises.map(item => item.id === ex.id ? { ...item, restTime: val } : item)
+                                          }));
+                                        }
+                                      }}
+                                      className="bg-slate-800 text-slate-300 border border-slate-600 rounded px-1 py-0.5 text-[10px] focus:outline-none focus:border-amber-500 flex-1 min-w-0"
+                                    >
+                                      <option value="" disabled>{REST_OPTIONS.includes(ex.restTime) ? t.quickSelect : '✏️ ' + ex.restTime + t.sec}</option>
+                                      {REST_OPTIONS.map(sec => (
+                                        <option key={sec} value={sec}>{sec} {t.sec}</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                {/* Global Options */}
+                <section className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-3">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-semibold text-slate-300">{t.totalSets}</span>
+                    <div className="flex items-center space-x-2">
+                      <button onClick={() => updateCurrentRoutine(r => ({ ...r, sets: Math.max(1, r.sets - 1) }))} className="w-7 h-7 bg-slate-800 border border-slate-700 rounded font-bold text-sm">-</button>
+                      <span className="text-emerald-400 font-bold text-sm w-4 text-center">{currentRoutine.sets}</span>
+                      <button onClick={() => updateCurrentRoutine(r => ({ ...r, sets: r.sets + 1 }))} className="w-7 h-7 bg-slate-800 border border-slate-700 rounded font-bold text-sm">+</button>
+                    </div>
+                  </div>
+                  
+                  {/* FIX: Language Dropdown */}
+                  <div className="flex justify-between items-center text-xs border-t border-slate-800 pt-2.5">
+                    <span className="font-semibold text-slate-300">🌐 {t.appLanguage}</span>
+                    <select value={lang} onChange={(e) => setLang(e.target.value)} className="bg-slate-800 border border-slate-700 text-slate-200 rounded px-2.5 py-1 text-xs focus:outline-none">
+                      <option value="zh-HK">繁體中文 (廣東話)</option>
+                      <option value="zh-CN">简体中文 (普通话)</option>
+                      <option value="en-US">English</option>
+                    </select>
+                  </div>
+                </section>
+
+                <button onClick={startWorkout} className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 font-black text-base rounded-2xl shadow-lg active:scale-95 transition">
+                  ▶ {t.startWorkout}
+                </button>
+              </div>
+            )}
+
+            {/* Timer Screen */}
+            {view === 'timer' && (
+              <div className="space-y-6 py-4 flex-1 flex flex-col justify-between">
+                <div className="flex justify-between bg-slate-900 p-3 rounded-2xl text-xs border border-slate-800">
+                  <div>{t.currentProgress}: <span className="text-emerald-400 font-bold">{currentIndex + 1}/{currentRoutine.exercises.length}</span></div>
+                  <div>{t.currentSet}: <span className="text-emerald-400 font-bold">{currentSet}/{currentRoutine.sets}</span></div>
+                </div>
+
+                <div className="flex justify-center my-auto">
+                  <div className={`relative w-72 h-72 rounded-full bg-slate-900 border-4 ${status === 'work' ? 'border-emerald-500' : status === 'rest' ? 'border-amber-500' : 'border-blue-500'} flex flex-col items-center justify-center p-4 shadow-2xl transition-all duration-300`}>
+                    <div className="text-xs bg-slate-800 text-slate-200 px-3 py-1 rounded-full uppercase mb-2 font-bold border border-slate-700">
+                      {status === 'prep' ? t.prepTitle : status === 'work' ? t.workTitle : status === 'rest' ? t.restTitle : status === 'paused' ? t.pausedTitle : t.finishedTitle}
+                    </div>
+                    <div className="text-7xl font-mono font-black tracking-tight">{timeLeft}<span className="text-lg font-normal text-slate-400 ml-1">{t.seconds}</span></div>
+                    <div className="text-base font-bold text-slate-100 mt-2 truncate max-w-[200px]">
+                      {status === 'prep' ? t.prepTitle : currentRoutine.exercises[currentIndex]?.name}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <button onClick={() => { releaseWakeLock(); setView('config'); setStatus('idle'); }} className="py-3 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold active:scale-95 transition">
+                    🔄 {t.reset}
+                  </button>
+                  <button onClick={() => setStatus(status === 'paused' ? 'work' : 'paused')} className="py-3 bg-emerald-500 text-slate-950 rounded-xl text-xs font-bold active:scale-95 transition">
+                    {status === 'paused' ? '▶ ' + t.resume : '⏸ ' + t.pause}
+                  </button>
+                  <button onClick={handlePhaseComplete} className="py-3 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold active:scale-95 transition">
+                    ⏭ {t.skip}
+                  </button>
+                </div>
+              </div>
+            )}
+          </main>
+
+          {/* Modal Guide */}
+          {showInstallGuide && (
+            <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-sm w-full space-y-4 shadow-2xl">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                  <h3 className="font-bold text-sm text-slate-100">{t.installGuide}</h3>
+                  <button onClick={() => setShowInstallGuide(false)} className="text-slate-400 font-bold">✕</button>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">{t.installDesc}</p>
+                <div className="space-y-2 text-xs text-slate-300">
+                  <div className="bg-slate-800 p-2.5 rounded-xl border border-slate-700">
+                    <div className="font-bold text-emerald-400">iOS (Safari):</div>
+                    <ol className="list-decimal list-inside text-[11px] space-y-1 mt-1">
+                      <li>{t.iosStep1}</li>
+                      <li>{t.iosStep2}</li>
+                    </ol>
+                  </div>
+                  <div className="bg-slate-800 p-2.5 rounded-xl border border-slate-700">
+                    <div className="font-bold text-teal-400">Android (Chrome):</div>
+                    <ol className="list-decimal list-inside text-[11px] space-y-1 mt-1">
+                      <li>{t.androidStep1}</li>
+                      <li>{t.androidStep2}</li>
+                    </ol>
+                  </div>
+                </div>
+                <button onClick={() => setShowInstallGuide(false)} className="w-full py-2.5 bg-emerald-500 text-slate-950 font-bold text-xs rounded-xl">
+                  {t.understand}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      );
     }
 
-    function updateTimerDisplay() {
-      const r = getActiveRoutine();
-      const t = TRANSLATIONS[lang] || TRANSLATIONS['zh-HK'];
-      const currentEx = r.exercises[currentIndex] || {};
-
-      document.getElementById('timer-progress-display').textContent = `${currentIndex + 1} / ${r.exercises.length}`;
-      document.getElementById('timer-set-display').textContent = `${currentSet} / ${r.sets}`;
-      document.getElementById('timer-badge').textContent = t[status] || status;
-      document.getElementById('timer-seconds').innerHTML = `${timeLeft}<span class="text-base font-normal text-slate-300 ml-1">${t.sec}</span>`;
-      document.getElementById('timer-exercise-name').textContent = status === 'prep' ? t.prep : currentEx.name;
-
-      if (status === 'work' && currentEx.restTime > 0) {
-        document.getElementById('timer-next-preview').textContent = `下個：休息 (${currentEx.restTime}${t.sec})`;
-      } else if (currentIndex < r.exercises.length - 1) {
-        document.getElementById('timer-next-preview').textContent = `下個：${r.exercises[currentIndex + 1].name}`;
-      } else {
-        document.getElementById('timer-next-preview').textContent = `下組：${r.exercises[0]?.name || ''}`;
-      }
-    }
-
-    document.getElementById('btn-sound-toggle').onclick = () => {
-      soundEnabled = !soundEnabled;
-      document.getElementById('btn-sound-toggle').textContent = soundEnabled ? '🔊' : '🔇';
-    };
-    document.getElementById('btn-guide-toggle').onclick = () => {
-      document.getElementById('modal-install').classList.remove('hidden');
-    };
-    document.getElementById('btn-close-modal').onclick = () => {
-      document.getElementById('modal-install').classList.add('hidden');
-    };
-    document.getElementById('btn-understand').onclick = () => {
-      document.getElementById('modal-install').classList.add('hidden');
-    };
-    document.getElementById('lang-select').onchange = (e) => {
-      lang = e.target.value;
-      render();
-    };
-    document.getElementById('btn-sets-dec').onclick = () => {
-      const r = getActiveRoutine();
-      r.sets = Math.max(1, r.sets - 1);
-      render();
-    };
-    document.getElementById('btn-sets-inc').onclick = () => {
-      const r = getActiveRoutine();
-      r.sets++;
-      render();
-    };
-    document.getElementById('routine-name-input').onchange = (e) => {
-      const r = getActiveRoutine();
-      r.name = e.target.value;
-      render();
-    };
-    document.getElementById('btn-add-routine').onclick = () => {
-      const newId = `r_${Date.now()}`;
-      routines.push({
-        id: newId,
-        name: `運動組合 ${routines.length + 1}`,
-        sets: 2,
-        exercises: [{ id: '1', name: '動作 1', workTime: 30, restTime: 10 }]
-      });
-      activeRoutineId = newId;
-      render();
-    };
-    document.getElementById('btn-add-exercise').onclick = () => {
-      const r = getActiveRoutine();
-      r.exercises.push({ id: Date.now().toString(), name: `動作 ${r.exercises.length + 1}`, workTime: 30, restTime: 10 });
-      render();
-    };
-    document.getElementById('btn-start-workout').onclick = startWorkout;
-
-    document.getElementById('btn-timer-reset').onclick = () => {
-      if (timerInterval) clearInterval(timerInterval);
-      releaseWakeLock();
-      status = 'idle';
-      document.getElementById('view-timer').classList.add('hidden');
-      document.getElementById('view-config').classList.remove('hidden');
-    };
-    document.getElementById('btn-timer-pause').onclick = () => {
-      if (status === 'paused') {
-        status = 'work';
-        document.getElementById('btn-timer-pause').textContent = '⏸ 暫停';
-      } else {
-        status = 'paused';
-        document.getElementById('btn-timer-pause').textContent = '▶ 繼續';
-      }
-    };
-    document.getElementById('btn-timer-skip').onclick = () => {
-      handlePhaseComplete();
-      updateTimerDisplay();
-    };
-
-    // Initial Launch
-    render();
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
   </script>
 </body>
 </html>
