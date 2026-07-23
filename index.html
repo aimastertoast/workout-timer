@@ -59,11 +59,11 @@
         min: '分',
         sec: '秒',
         speakPrepStart: '準備開始',
-        speakPrepNext: '下個，',
+        speakPrepNext: '預備',
         speakStart: '開始',
         speakRest: '休息',
         speakFinish: '運動完成！',
-        speakSetPrep: '第 {set} 組，',
+        speakSetPrep: '第 {set} 組，預備',
         exercise: '動作',
         minOneRoutine: '必須保留至少一個運動組合！',
         backupNotice: '請複製以下資料進行備份：',
@@ -111,11 +111,11 @@
         min: '分',
         sec: '秒',
         speakPrepStart: '准备开始',
-        speakPrepNext: '下个，',
+        speakPrepNext: '预备',
         speakStart: '开始',
         speakRest: '休息',
         speakFinish: '运动完成！',
-        speakSetPrep: '第 {set} 组，',
+        speakSetPrep: '第 {set} 组，预备',
         exercise: '动作',
         minOneRoutine: '必须保留至少一个运动组合！',
         backupNotice: '请复制以下数据进行备份：',
@@ -163,11 +163,11 @@
         min: 'm',
         sec: 's',
         speakPrepStart: 'Get ready',
-        speakPrepNext: 'Next, ',
+        speakPrepNext: 'Ready',
         speakStart: 'Go',
         speakRest: 'Rest',
         speakFinish: 'Workout complete!',
-        speakSetPrep: 'Round {set}, ',
+        speakSetPrep: 'Round {set}, Ready',
         exercise: 'Exercise',
         minOneRoutine: 'At least one routine must be kept!',
         backupNotice: 'Copy the following data for backup:',
@@ -201,12 +201,12 @@
 
       // Persistent Storage for Routines
       const [routines, setRoutines] = useState(() => {
-        const saved = localStorage.getItem('workout_routines_v7') || localStorage.getItem('workout_routines_v6') || localStorage.getItem('workout_routines_v5');
+        const saved = localStorage.getItem('workout_routines_v8') || localStorage.getItem('workout_routines_v7') || localStorage.getItem('workout_routines_v6');
         return saved ? JSON.parse(saved) : INITIAL_ROUTINES;
       });
 
       const [activeRoutineId, setActiveRoutineId] = useState(() => {
-        return localStorage.getItem('workout_active_id_v7') || (routines[0] ? routines[0].id : '');
+        return localStorage.getItem('workout_active_id_v8') || (routines[0] ? routines[0].id : '');
       });
 
       const currentRoutine = routines.find(r => r.id === activeRoutineId) || routines[0] || {
@@ -233,9 +233,9 @@
       useEffect(() => { localStorage.setItem('workout_lang', lang); }, [lang]);
       useEffect(() => { localStorage.setItem('workout_gender', gender); }, [gender]);
       useEffect(() => { 
-        localStorage.setItem('workout_routines_v7', JSON.stringify(routines)); 
+        localStorage.setItem('workout_routines_v8', JSON.stringify(routines)); 
       }, [routines]);
-      useEffect(() => { localStorage.setItem('workout_active_id_v7', activeRoutineId); }, [activeRoutineId]);
+      useEffect(() => { localStorage.setItem('workout_active_id_v8', activeRoutineId); }, [activeRoutineId]);
 
       // Pre-fetch browser TTS voices
       const [systemVoices, setSystemVoices] = useState([]);
@@ -279,12 +279,14 @@
         } catch (e) {}
       };
 
-      // Voice Match Engine for Male/Female + Mandarin/Cantonese/English
+      // Strict Voice Engine Matcher for Male/Female & Mandarin/Cantonese
       const speak = (text) => {
         if (!('speechSynthesis' in window)) return;
         try {
           window.speechSynthesis.cancel();
           const utterance = new SpeechSynthesisUtterance(text);
+          
+          // Explicit Language Code
           utterance.lang = lang;
 
           const voices = systemVoices.length > 0 ? systemVoices : (window.speechSynthesis.getVoices() || []);
@@ -292,43 +294,52 @@
           if (voices.length > 0) {
             let filteredVoices = [];
 
-            // Filter by language strictly
+            // Strict Filter: Never let zh-CN use zh-HK voice!
             if (lang === 'zh-CN') {
-              filteredVoices = voices.filter(v => 
-                (v.lang.includes('zh-CN') || v.lang.includes('zh_CN') || v.lang.includes('zh-Hans') || v.name.includes('Mandarin') || v.name.includes('Putonghua') || v.name.includes('Ting-Ting') || v.name.includes('Lili')) &&
-                !v.lang.includes('HK') && !v.lang.includes('TW')
-              );
+              filteredVoices = voices.filter(v => {
+                const vLang = (v.lang || '').toLowerCase().replace('_', '-');
+                return (vLang.includes('zh-cn') || vLang.includes('zh-hans') || v.name.includes('Mandarin') || v.name.includes('Putonghua') || v.name.includes('Ting-Ting') || v.name.includes('Lili')) && !vLang.includes('hk') && !vLang.includes('tw');
+              });
             } else if (lang === 'zh-HK') {
-              filteredVoices = voices.filter(v => 
-                v.lang.includes('zh-HK') || v.lang.includes('zh_HK') || v.lang.includes('zh-Hant-HK') || v.name.includes('Sin-Ji') || v.name.includes('Cantonese')
-              );
+              filteredVoices = voices.filter(v => {
+                const vLang = (v.lang || '').toLowerCase().replace('_', '-');
+                return vLang.includes('zh-hk') || vLang.includes('zh-hant-hk') || v.name.includes('Sin-Ji') || v.name.includes('Cantonese');
+              });
             } else {
               filteredVoices = voices.filter(v => v.lang.startsWith('en'));
             }
 
-            if (filteredVoices.length === 0) {
-              filteredVoices = voices.filter(v => v.lang.startsWith(lang.split('-')[0]));
-            }
-
-            // Filter by Gender keywords if possible
-            let matchedVoice = null;
-            if (gender === 'male') {
-              matchedVoice = filteredVoices.find(v => 
-                v.name.toLowerCase().includes('male') || 
-                v.name.includes('Kangkang') || v.name.includes('Danny') || v.name.includes('Alex') || v.name.includes('George') || v.name.includes('Sin-ji')
-              );
+            // Assign matching voice ONLY if found for exact language
+            if (filteredVoices.length > 0) {
+              let genderVoice = null;
+              if (gender === 'male') {
+                genderVoice = filteredVoices.find(v => {
+                  const name = v.name.toLowerCase();
+                  return name.includes('male') || name.includes('kangkang') || name.includes('danny') || name.includes('alex') || name.includes('george') || name.includes('fred') || name.includes('li-mu');
+                });
+              } else {
+                genderVoice = filteredVoices.find(v => {
+                  const name = v.name.toLowerCase();
+                  return name.includes('female') || name.includes('ting-ting') || name.includes('sin-ji') || name.includes('lili') || name.includes('samantha') || name.includes('victoria') || name.includes('kyoko');
+                });
+              }
+              utterance.voice = genderVoice || filteredVoices[0];
             } else {
-              matchedVoice = filteredVoices.find(v => 
-                v.name.toLowerCase().includes('female') || 
-                v.name.includes('Ting-Ting') || v.name.includes('Lili') || v.name.includes('Kyoko') || v.name.includes('Samantha') || v.name.includes('Victoria')
-              );
+              // If no specific voice object for this language exists in array, leave utterance.voice NULL 
+              // so iOS native fallback engine speaks utterance.lang in native Mandarin/Cantonese instead of wrong voice!
+              utterance.voice = null;
             }
-
-            utterance.voice = matchedVoice || filteredVoices[0] || voices[0];
           }
 
-          utterance.rate = 1.1;
-          utterance.pitch = gender === 'female' ? 1.1 : 0.85;
+          // Pitch Modulation Guarantee: Male = 0.65 (Deep Pitch), Female = 1.20 (High Pitch)
+          if (gender === 'male') {
+            utterance.pitch = 0.65;
+            utterance.rate = 1.0;
+          } else {
+            utterance.pitch = 1.20;
+            utterance.rate = 1.05;
+          }
+
           window.speechSynthesis.speak(utterance);
         } catch (e) {}
       };
@@ -348,7 +359,7 @@
         }
       };
 
-      // Timer Engine
+      // Timer Engine with 3-2-1 Work & Prep Countdown
       useEffect(() => {
         if (status === 'paused' || status === 'idle' || status === 'finished') {
           if (timerRef.current) clearInterval(timerRef.current);
@@ -363,7 +374,8 @@
             }
             const nextTime = prev - 1;
 
-            if (status === 'prep' && nextTime <= 3 && nextTime >= 1) {
+            // QA FEATURE: 3-2-1 Countdown voice & beep for BOTH 'prep' and 'work' phases!
+            if ((status === 'prep' || status === 'work') && nextTime <= 3 && nextTime >= 1) {
               playBeep(nextTime === 1 ? 1000 : 800, 0.2);
               speak(`${nextTime}`);
             }
@@ -400,11 +412,10 @@
               playBeep(600, 0.3);
               speak(t.speakRest);
             } else if (userRest > 0) {
-              const nextEx = exercises[currentIndex + 1];
               setStatus('prep');
               setTimeLeft(userRest);
               setPhaseDuration(userRest);
-              speak(`${t.speakPrepNext}${nextEx.name}`);
+              speak(t.speakPrepNext);
             } else {
               const nextIdx = currentIndex + 1;
               setCurrentIndex(nextIdx);
@@ -422,8 +433,7 @@
           setStatus('prep');
           setTimeLeft(3);
           setPhaseDuration(3);
-          const nextEx = exercises[nextIdx];
-          speak(`${t.speakPrepNext}${nextEx.name}`);
+          speak(t.speakPrepNext);
         }
       };
 
@@ -435,7 +445,7 @@
           setTimeLeft(5);
           setPhaseDuration(5);
           const msg = t.speakSetPrep.replace('{set}', (currentSet + 1).toString());
-          speak(`${msg}${currentRoutine.exercises[0].name}`);
+          speak(msg);
         } else {
           setStatus('finished');
           releaseWakeLock();
@@ -454,7 +464,7 @@
         setStatus('prep');
         setTimeLeft(3);
         setPhaseDuration(3);
-        speak(`${t.speakPrepStart}`);
+        speak(t.speakPrepStart);
       };
 
       const updateCurrentRoutine = (updater) => {
@@ -553,7 +563,7 @@
                     <span className="text-xs font-semibold text-slate-400">{t.routines}</span>
                     <div className="flex space-x-1">
                       <button onClick={() => setShowImportModal(true)} className="px-2 py-1 bg-slate-800 text-slate-300 border border-slate-700 rounded-lg text-[11px] font-semibold">{t.importRoutines}</button>
-                      <button onClick={createNewRoutine} className="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-semibold">+ {t.addRoutine}</button>
+                      <button onClick={createNewRoutine} className="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-semibold hover:bg-emerald-500/30 transition">+ {t.addRoutine}</button>
                     </div>
                   </div>
                   <div className="flex space-x-2 overflow-x-auto pb-1">
@@ -708,7 +718,7 @@
                   </div>
                 </section>
 
-                {/* Global Settings */}
+                {/* Settings */}
                 <section className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-3">
                   <div className="flex justify-between items-center text-xs">
                     <span className="font-semibold text-slate-300">{t.totalSets}</span>
