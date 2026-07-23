@@ -25,6 +25,8 @@
         routines: '我的運動組合',
         addRoutine: '建立新組合',
         deleteRoutine: '刪除組合',
+        exportRoutines: '備份/匯出組合',
+        importRoutines: '還原/匯入組合',
         totalTime: '估算總運動時間',
         totalExercises: '總動作數',
         addExercise: '新增動作',
@@ -34,6 +36,9 @@
         noRestLabel: '最後動作（無休息）',
         totalSets: '總循環組數',
         appLanguage: '介面及語音語言',
+        voiceGender: '語音性別',
+        female: '女聲',
+        male: '男聲',
         startWorkout: '開始運動計時',
         currentProgress: '當前進度',
         currentSet: '循環組數',
@@ -53,14 +58,18 @@
         seconds: '秒',
         min: '分',
         sec: '秒',
-        speakStart: '開始：',
-        speakRest: '休息時間',
-        speakPrepNext: '準備下個動作：',
-        speakSetPrep: '第 {set} 組準備，動作：',
-        speakFinish: '恭喜！運動全組完成！',
-        speakPrepStart: '準備開始運動，第一組：',
+        speakPrepStart: '準備開始',
+        speakPrepNext: '下個，',
+        speakStart: '開始',
+        speakRest: '休息',
+        speakFinish: '運動完成！',
+        speakSetPrep: '第 {set} 組，',
         exercise: '動作',
-        minOneRoutine: '必須保留至少一個運動組合！'
+        minOneRoutine: '必須保留至少一個運動組合！',
+        backupNotice: '請複製以下資料進行備份：',
+        importNotice: '請貼上備份資料 JSON：',
+        importSuccess: '組合匯入成功！',
+        importError: '資料格式不正確，請重新確認。'
       },
       'zh-CN': {
         title: '运动计时器 Pro',
@@ -68,6 +77,8 @@
         routines: '我的运动组合',
         addRoutine: '新建组合',
         deleteRoutine: '删除组合',
+        exportRoutines: '备份/导出组合',
+        importRoutines: '还原/导入组合',
         totalTime: '估算总运动时间',
         totalExercises: '总动作数',
         addExercise: '新增动作',
@@ -77,6 +88,9 @@
         noRestLabel: '最后动作（无休息）',
         totalSets: '总循环组数',
         appLanguage: '界面及语音语言',
+        voiceGender: '语音性别',
+        female: '女声',
+        male: '男声',
         startWorkout: '开始运动计时',
         currentProgress: '当前进度',
         currentSet: '循环组数',
@@ -88,7 +102,7 @@
         nextRest: '下个：休息',
         nextEx: '下个：',
         nextSet: '下组：',
-        reset: '结束重叠',
+        reset: '结束重来',
         resume: '继续',
         pause: '暂停',
         skip: '跳过此段',
@@ -96,14 +110,18 @@
         seconds: '秒',
         min: '分',
         sec: '秒',
-        speakStart: '开始：',
-        speakRest: '休息时间',
-        speakPrepNext: '准备下个动作：',
-        speakSetPrep: '第 {set} 组准备，动作：',
-        speakFinish: '恭喜！运动全组完成！',
-        speakPrepStart: '准备开始运动，第一组：',
+        speakPrepStart: '准备开始',
+        speakPrepNext: '下个，',
+        speakStart: '开始',
+        speakRest: '休息',
+        speakFinish: '运动完成！',
+        speakSetPrep: '第 {set} 组，',
         exercise: '动作',
-        minOneRoutine: '必须保留至少一个运动组合！'
+        minOneRoutine: '必须保留至少一个运动组合！',
+        backupNotice: '请复制以下数据进行备份：',
+        importNotice: '请粘贴备份数据 JSON：',
+        importSuccess: '组合导入成功！',
+        importError: '数据格式不正确，请重新确认。'
       },
       'en-US': {
         title: 'Workout Timer Pro',
@@ -111,6 +129,8 @@
         routines: 'My Routines',
         addRoutine: 'New Routine',
         deleteRoutine: 'Delete Routine',
+        exportRoutines: 'Export Backup',
+        importRoutines: 'Import Backup',
         totalTime: 'Estimated Total Time',
         totalExercises: 'Total Exercises',
         addExercise: 'Add Exercise',
@@ -120,6 +140,9 @@
         noRestLabel: 'Last Exercise (No Rest)',
         totalSets: 'Total Sets',
         appLanguage: 'Language & Voice',
+        voiceGender: 'Voice Gender',
+        female: 'Female',
+        male: 'Male',
         startWorkout: 'Start Workout',
         currentProgress: 'Progress',
         currentSet: 'Round',
@@ -139,14 +162,18 @@
         seconds: 's',
         min: 'm',
         sec: 's',
-        speakStart: 'Start: ',
-        speakRest: 'Rest time',
-        speakPrepNext: 'Get ready for: ',
-        speakSetPrep: 'Round {set} ready, action: ',
-        speakFinish: 'Congratulations! Workout complete!',
-        speakPrepStart: 'Get ready, first exercise: ',
+        speakPrepStart: 'Get ready',
+        speakPrepNext: 'Next, ',
+        speakStart: 'Go',
+        speakRest: 'Rest',
+        speakFinish: 'Workout complete!',
+        speakSetPrep: 'Round {set}, ',
         exercise: 'Exercise',
-        minOneRoutine: 'At least one routine must be kept!'
+        minOneRoutine: 'At least one routine must be kept!',
+        backupNotice: 'Copy the following data for backup:',
+        importNotice: 'Paste backup JSON data below:',
+        importSuccess: 'Routines imported successfully!',
+        importError: 'Invalid data format. Please check again.'
       }
     };
 
@@ -169,15 +196,17 @@
 
     function App() {
       const [lang, setLang] = useState(() => localStorage.getItem('workout_lang') || 'zh-HK');
+      const [gender, setGender] = useState(() => localStorage.getItem('workout_gender') || 'female');
       const t = TRANSLATIONS[lang] || TRANSLATIONS['zh-HK'];
 
+      // Persistent Storage for Routines
       const [routines, setRoutines] = useState(() => {
-        const saved = localStorage.getItem('workout_routines_v6');
+        const saved = localStorage.getItem('workout_routines_v7') || localStorage.getItem('workout_routines_v6') || localStorage.getItem('workout_routines_v5');
         return saved ? JSON.parse(saved) : INITIAL_ROUTINES;
       });
 
       const [activeRoutineId, setActiveRoutineId] = useState(() => {
-        return localStorage.getItem('workout_active_id_v6') || (routines[0] ? routines[0].id : '');
+        return localStorage.getItem('workout_active_id_v7') || (routines[0] ? routines[0].id : '');
       });
 
       const currentRoutine = routines.find(r => r.id === activeRoutineId) || routines[0] || {
@@ -186,26 +215,39 @@
 
       const [soundEnabled, setSoundEnabled] = useState(true);
       const [view, setView] = useState('config');
-      const [status, setStatus] = useState('idle'); // 'idle' | 'prep' | 'work' | 'rest' | 'paused' | 'finished'
+      const [status, setStatus] = useState('idle');
       const [currentIndex, setCurrentIndex] = useState(0);
       const [currentSet, setCurrentSet] = useState(1);
       const [timeLeft, setTimeLeft] = useState(0);
       const [phaseDuration, setPhaseDuration] = useState(1);
+      
+      // Modals for Export/Import
+      const [showExportModal, setShowExportModal] = useState(false);
+      const [showImportModal, setShowImportModal] = useState(false);
+      const [importText, setImportText] = useState('');
 
       const timerRef = useRef(null);
       const audioCtxRef = useRef(null);
       const wakeLockRef = useRef(null);
 
       useEffect(() => { localStorage.setItem('workout_lang', lang); }, [lang]);
-      useEffect(() => { localStorage.setItem('workout_routines_v6', JSON.stringify(routines)); }, [routines]);
-      useEffect(() => { localStorage.setItem('workout_active_id_v6', activeRoutineId); }, [activeRoutineId]);
+      useEffect(() => { localStorage.setItem('workout_gender', gender); }, [gender]);
+      useEffect(() => { 
+        localStorage.setItem('workout_routines_v7', JSON.stringify(routines)); 
+      }, [routines]);
+      useEffect(() => { localStorage.setItem('workout_active_id_v7', activeRoutineId); }, [activeRoutineId]);
 
-      // Ensure voices load on iOS Safari
+      // Pre-fetch browser TTS voices
+      const [systemVoices, setSystemVoices] = useState([]);
       useEffect(() => {
+        const updateVoices = () => {
+          if ('speechSynthesis' in window) {
+            setSystemVoices(window.speechSynthesis.getVoices() || []);
+          }
+        };
+        updateVoices();
         if ('speechSynthesis' in window) {
-          window.speechSynthesis.onvoiceschanged = () => {
-            window.speechSynthesis.getVoices();
-          };
+          window.speechSynthesis.onvoiceschanged = updateVoices;
         }
       }, []);
 
@@ -237,7 +279,7 @@
         } catch (e) {}
       };
 
-      // Enhanced Multilingual Speech Synthesis
+      // Voice Match Engine for Male/Female + Mandarin/Cantonese/English
       const speak = (text) => {
         if (!('speechSynthesis' in window)) return;
         try {
@@ -245,30 +287,48 @@
           const utterance = new SpeechSynthesisUtterance(text);
           utterance.lang = lang;
 
-          const voices = window.speechSynthesis.getVoices() || [];
+          const voices = systemVoices.length > 0 ? systemVoices : (window.speechSynthesis.getVoices() || []);
+          
           if (voices.length > 0) {
-            let matchedVoice = null;
+            let filteredVoices = [];
+
+            // Filter by language strictly
             if (lang === 'zh-CN') {
-              matchedVoice = voices.find(v => 
-                v.lang === 'zh-CN' || v.lang === 'zh_CN' || v.lang === 'zh-Hans-CN' || 
-                v.name.includes('Ting-Ting') || v.name.includes('Mandarin') || v.name.includes('Putonghua') || 
-                (v.lang.startsWith('zh') && !v.lang.includes('HK') && !v.lang.includes('TW'))
+              filteredVoices = voices.filter(v => 
+                (v.lang.includes('zh-CN') || v.lang.includes('zh_CN') || v.lang.includes('zh-Hans') || v.name.includes('Mandarin') || v.name.includes('Putonghua') || v.name.includes('Ting-Ting') || v.name.includes('Lili')) &&
+                !v.lang.includes('HK') && !v.lang.includes('TW')
               );
             } else if (lang === 'zh-HK') {
-              matchedVoice = voices.find(v => 
-                v.lang === 'zh-HK' || v.lang === 'zh_HK' || v.lang === 'zh-Hant-HK' || 
-                v.name.includes('Sin-Ji') || v.name.includes('Cantonese')
+              filteredVoices = voices.filter(v => 
+                v.lang.includes('zh-HK') || v.lang.includes('zh_HK') || v.lang.includes('zh-Hant-HK') || v.name.includes('Sin-Ji') || v.name.includes('Cantonese')
               );
-            } else if (lang === 'en-US') {
-              matchedVoice = voices.find(v => v.lang === 'en-US' || v.lang === 'en_US' || v.lang.startsWith('en'));
+            } else {
+              filteredVoices = voices.filter(v => v.lang.startsWith('en'));
             }
-            if (matchedVoice) {
-              utterance.voice = matchedVoice;
+
+            if (filteredVoices.length === 0) {
+              filteredVoices = voices.filter(v => v.lang.startsWith(lang.split('-')[0]));
             }
+
+            // Filter by Gender keywords if possible
+            let matchedVoice = null;
+            if (gender === 'male') {
+              matchedVoice = filteredVoices.find(v => 
+                v.name.toLowerCase().includes('male') || 
+                v.name.includes('Kangkang') || v.name.includes('Danny') || v.name.includes('Alex') || v.name.includes('George') || v.name.includes('Sin-ji')
+              );
+            } else {
+              matchedVoice = filteredVoices.find(v => 
+                v.name.toLowerCase().includes('female') || 
+                v.name.includes('Ting-Ting') || v.name.includes('Lili') || v.name.includes('Kyoko') || v.name.includes('Samantha') || v.name.includes('Victoria')
+              );
+            }
+
+            utterance.voice = matchedVoice || filteredVoices[0] || voices[0];
           }
 
-          utterance.rate = 1.0;
-          utterance.pitch = 1.0;
+          utterance.rate = 1.1;
+          utterance.pitch = gender === 'female' ? 1.1 : 0.85;
           window.speechSynthesis.speak(utterance);
         } catch (e) {}
       };
@@ -303,7 +363,6 @@
             }
             const nextTime = prev - 1;
 
-            // Countdown voice ONLY during 'prep' phase (or 'work' finish) to prevent rest voice overlap
             if (status === 'prep' && nextTime <= 3 && nextTime >= 1) {
               playBeep(nextTime === 1 ? 1000 : 800, 0.2);
               speak(`${nextTime}`);
@@ -314,7 +373,7 @@
         }, 1000);
 
         return () => { if (timerRef.current) clearInterval(timerRef.current); };
-      }, [status, currentIndex, currentSet, currentRoutine, lang]);
+      }, [status, currentIndex, currentSet, currentRoutine, lang, gender]);
 
       // Smart Rest Deduction Logic
       const handlePhaseComplete = () => {
@@ -323,18 +382,15 @@
         const currentEx = exercises[currentIndex];
 
         if (status === 'prep') {
-          // Prep phase complete -> Start Work
           setStatus('work');
           setTimeLeft(currentEx.workTime);
           setPhaseDuration(currentEx.workTime);
           playBeep(1200, 0.4);
-          speak(`${t.speakStart}${currentEx.name}`);
+          speak(t.speakStart);
         } else if (status === 'work') {
           if (isLastExerciseInSet) {
-            // Last exercise in set -> NO REST
             moveToNextSetOrFinish();
           } else {
-            // Middle exercise -> Rest - 3s (Reserve last 3s for Next Prep Countdown)
             const userRest = currentEx.restTime || 0;
             if (userRest > 3) {
               const actualRest = userRest - 3;
@@ -344,14 +400,12 @@
               playBeep(600, 0.3);
               speak(t.speakRest);
             } else if (userRest > 0) {
-              // User set 1-3s rest -> Directly do 1-3s prep countdown for next
               const nextEx = exercises[currentIndex + 1];
               setStatus('prep');
               setTimeLeft(userRest);
               setPhaseDuration(userRest);
               speak(`${t.speakPrepNext}${nextEx.name}`);
             } else {
-              // User set 0s rest -> Directly start next work
               const nextIdx = currentIndex + 1;
               setCurrentIndex(nextIdx);
               setStatus('work');
@@ -359,11 +413,10 @@
               setTimeLeft(nextEx.workTime);
               setPhaseDuration(nextEx.workTime);
               playBeep(1200, 0.4);
-              speak(`${t.speakStart}${nextEx.name}`);
+              speak(t.speakStart);
             }
           }
         } else if (status === 'rest') {
-          // Rest phase (userRest - 3s) ended -> Transition to 3s prep countdown for next exercise
           const nextIdx = currentIndex + 1;
           setCurrentIndex(nextIdx);
           setStatus('prep');
@@ -381,9 +434,8 @@
           setStatus('prep');
           setTimeLeft(5);
           setPhaseDuration(5);
-          const firstEx = currentRoutine.exercises[0];
           const msg = t.speakSetPrep.replace('{set}', (currentSet + 1).toString());
-          speak(`${msg}${firstEx.name}`);
+          speak(`${msg}${currentRoutine.exercises[0].name}`);
         } else {
           setStatus('finished');
           releaseWakeLock();
@@ -400,9 +452,9 @@
         setCurrentIndex(0);
         setCurrentSet(1);
         setStatus('prep');
-        setTimeLeft(5);
-        setPhaseDuration(5);
-        speak(`${t.speakPrepStart}${currentRoutine.exercises[0].name}`);
+        setTimeLeft(3);
+        setPhaseDuration(3);
+        speak(`${t.speakPrepStart}`);
       };
 
       const updateCurrentRoutine = (updater) => {
@@ -433,6 +485,24 @@
         }
       };
 
+      // Import JSON Routine Backup
+      const handleImportJSON = () => {
+        try {
+          const parsed = JSON.parse(importText);
+          if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].exercises) {
+            setRoutines(parsed);
+            setActiveRoutineId(parsed[0].id);
+            setShowImportModal(false);
+            setImportText('');
+            alert(t.importSuccess);
+          } else {
+            alert(t.importError);
+          }
+        } catch (e) {
+          alert(t.importError);
+        }
+      };
+
       const calculateTotalTime = () => {
         if (!currentRoutine.exercises || currentRoutine.exercises.length === 0) return `0${t.sec}`;
         const exercises = currentRoutine.exercises;
@@ -445,17 +515,17 @@
           }
         });
 
-        const total = (singleSetTime * currentRoutine.sets) + 5;
+        const total = (singleSetTime * currentRoutine.sets) + 3;
         const mins = Math.floor(total / 60);
         const secs = total % 60;
         return `${mins}${t.min} ${secs}${t.sec}`;
       };
 
-      // Displayed countdown number during Rest phase is adjusted (+3) to match user config seamlessly
       const displayTimeLeft = status === 'rest' ? timeLeft + 3 : timeLeft;
 
       return (
         <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none pb-10">
+          {/* Top Bar */}
           <header className="sticky top-0 z-30 bg-slate-900/90 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <div className="bg-emerald-500 p-2 rounded-xl text-slate-950 font-bold text-lg">🏋️</div>
@@ -464,19 +534,27 @@
                 <p className="text-[10px] text-slate-400">{t.subtitle}</p>
               </div>
             </div>
-            <button onClick={() => setSoundEnabled(!soundEnabled)} className="p-2 bg-slate-800 rounded-lg text-sm">
-              {soundEnabled ? '🔊' : '🔇'}
-            </button>
+            <div className="flex items-center space-x-2">
+              <button onClick={() => setShowExportModal(true)} title={t.exportRoutines} className="px-2 py-1 bg-slate-800 border border-slate-700 rounded-lg text-xs font-semibold text-slate-300">
+                💾 備份
+              </button>
+              <button onClick={() => setSoundEnabled(!soundEnabled)} className="p-2 bg-slate-800 rounded-lg text-sm">
+                {soundEnabled ? '🔊' : '🔇'}
+              </button>
+            </div>
           </header>
 
           <main className="flex-1 max-w-md w-full mx-auto px-4 pt-4 flex flex-col">
             {view === 'config' && (
               <div className="space-y-4">
-                {/* Workout Routines Section with Delete Button */}
+                {/* Routines Carousel */}
                 <section className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-slate-400">{t.routines}</span>
-                    <button onClick={createNewRoutine} className="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-semibold hover:bg-emerald-500/30 transition">+ {t.addRoutine}</button>
+                    <div className="flex space-x-1">
+                      <button onClick={() => setShowImportModal(true)} className="px-2 py-1 bg-slate-800 text-slate-300 border border-slate-700 rounded-lg text-[11px] font-semibold">{t.importRoutines}</button>
+                      <button onClick={createNewRoutine} className="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-semibold">+ {t.addRoutine}</button>
+                    </div>
                   </div>
                   <div className="flex space-x-2 overflow-x-auto pb-1">
                     {routines.map(r => (
@@ -492,7 +570,6 @@
                               deleteRoutine(r.id);
                             }}
                             className="p-0.5 text-slate-500 hover:text-red-400 font-bold transition"
-                            title={t.deleteRoutine}
                           >
                             ✕
                           </button>
@@ -513,7 +590,7 @@
                   </div>
                 </div>
 
-                {/* Exercises List Editor */}
+                {/* Exercises Editor */}
                 <section className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
                   <div className="flex justify-between items-center pb-2 border-b border-slate-800">
                     <input
@@ -528,7 +605,7 @@
                     }))} className="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-xs font-semibold">+ {t.addExercise}</button>
                   </div>
 
-                  <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
+                  <div className="space-y-2.5 max-h-[280px] overflow-y-auto pr-1">
                     {currentRoutine.exercises.map((ex, idx) => {
                       const isLast = (idx === currentRoutine.exercises.length - 1);
                       return (
@@ -551,7 +628,7 @@
                           </div>
 
                           <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-slate-700/40">
-                            {/* Work Time: Input + Dropdown */}
+                            {/* Work Time */}
                             <div className="flex justify-between items-center bg-slate-900/80 px-2 py-1.5 rounded border border-slate-700/50">
                               <span className="text-emerald-400 font-medium">{t.workTimeLabel}:</span>
                               <div className="flex items-center space-x-1">
@@ -563,7 +640,7 @@
                                     ...r,
                                     exercises: r.exercises.map(item => item.id === ex.id ? { ...item, workTime: Math.max(1, parseInt(e.target.value) || 0) } : item)
                                   }))}
-                                  className="w-10 bg-slate-800 text-right text-emerald-300 font-bold border border-slate-600 rounded px-1 py-0.5 text-xs focus:outline-none focus:border-emerald-500"
+                                  className="w-10 bg-slate-800 text-right text-emerald-300 font-bold border border-slate-600 rounded px-1 py-0.5 text-xs focus:outline-none"
                                 />
                                 <select
                                   value=""
@@ -586,7 +663,7 @@
                               </div>
                             </div>
 
-                            {/* Rest Time: Input + Dropdown */}
+                            {/* Rest Time */}
                             <div className="flex justify-between items-center bg-slate-900/80 px-2 py-1.5 rounded border border-slate-700/50">
                               <span className="text-amber-400 font-medium">{t.restTimeLabel}:</span>
                               {isLast ? (
@@ -601,7 +678,7 @@
                                       ...r,
                                       exercises: r.exercises.map(item => item.id === ex.id ? { ...item, restTime: Math.max(0, parseInt(e.target.value) || 0) } : item)
                                     }))}
-                                    className="w-10 bg-slate-800 text-right text-amber-300 font-bold border border-slate-600 rounded px-1 py-0.5 text-xs focus:outline-none focus:border-amber-500"
+                                    className="w-10 bg-slate-800 text-right text-amber-300 font-bold border border-slate-600 rounded px-1 py-0.5 text-xs focus:outline-none"
                                   />
                                   <select
                                     value=""
@@ -631,6 +708,7 @@
                   </div>
                 </section>
 
+                {/* Global Settings */}
                 <section className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-3">
                   <div className="flex justify-between items-center text-xs">
                     <span className="font-semibold text-slate-300">{t.totalSets}</span>
@@ -641,12 +719,22 @@
                     </div>
                   </div>
                   
+                  {/* Language Selector */}
                   <div className="flex justify-between items-center text-xs border-t border-slate-800 pt-2.5">
                     <span className="font-semibold text-slate-300">🌐 {t.appLanguage}</span>
                     <select value={lang} onChange={(e) => setLang(e.target.value)} className="bg-slate-800 border border-slate-700 text-slate-200 rounded px-2.5 py-1 text-xs focus:outline-none">
                       <option value="zh-HK">繁體中文 (廣東話)</option>
                       <option value="zh-CN">简体中文 (普通话)</option>
                       <option value="en-US">English</option>
+                    </select>
+                  </div>
+
+                  {/* Gender Selector */}
+                  <div className="flex justify-between items-center text-xs border-t border-slate-800 pt-2.5">
+                    <span className="font-semibold text-slate-300">🗣️ {t.voiceGender}</span>
+                    <select value={gender} onChange={(e) => setGender(e.target.value)} className="bg-slate-800 border border-slate-700 text-slate-200 rounded px-2.5 py-1 text-xs focus:outline-none">
+                      <option value="female">👧 {t.female}</option>
+                      <option value="male">👦 {t.male}</option>
                     </select>
                   </div>
                 </section>
@@ -691,6 +779,59 @@
               </div>
             )}
           </main>
+
+          {/* Export Modal */}
+          {showExportModal && (
+            <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-sm w-full space-y-3 shadow-2xl">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                  <h3 className="font-bold text-sm text-slate-100">{t.exportRoutines}</h3>
+                  <button onClick={() => setShowExportModal(false)} className="text-slate-400 font-bold">✕</button>
+                </div>
+                <p className="text-xs text-slate-300">{t.backupNotice}</p>
+                <textarea
+                  readOnly
+                  value={JSON.stringify(routines, null, 2)}
+                  className="w-full h-40 bg-slate-950 border border-slate-800 rounded-xl p-2 text-[10px] font-mono text-emerald-400 focus:outline-none"
+                />
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(JSON.stringify(routines, null, 2));
+                    alert('已複製到剪貼簿！');
+                  }}
+                  className="w-full py-2.5 bg-emerald-500 text-slate-950 font-bold text-xs rounded-xl"
+                >
+                  複製備份文字
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Import Modal */}
+          {showImportModal && (
+            <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-sm w-full space-y-3 shadow-2xl">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                  <h3 className="font-bold text-sm text-slate-100">{t.importRoutines}</h3>
+                  <button onClick={() => setShowImportModal(false)} className="text-slate-400 font-bold">✕</button>
+                </div>
+                <p className="text-xs text-slate-300">{t.importNotice}</p>
+                <textarea
+                  value={importText}
+                  onChange={(e) => setImportText(e.target.value)}
+                  placeholder='[{"id":"1", "name":"My Routine", ...}]'
+                  className="w-full h-40 bg-slate-950 border border-slate-800 rounded-xl p-2 text-[10px] font-mono text-slate-200 focus:outline-none"
+                />
+                <button
+                  onClick={handleImportJSON}
+                  className="w-full py-2.5 bg-emerald-500 text-slate-950 font-bold text-xs rounded-xl"
+                >
+                  確認還原/匯入
+                </button>
+              </div>
+            </div>
+          )}
+
         </div>
       );
     }
